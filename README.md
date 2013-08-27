@@ -1,5 +1,7 @@
 # Gotenv
 
+[![Build Status](https://travis-ci.org/subosito/gotenv.png)](https://travis-ci.org/subosito/gotenv)
+
 Loads environment variables from `.env` file.
 
 ## Usage
