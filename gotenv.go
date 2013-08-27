@@ -14,6 +14,7 @@ const (
 	VARIABLE = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
 )
 
+// By default, it will load `.env` file on the current path and set the environment variables. You can supply filenames parameter to load your desired files.
 func Load(filenames ...string) error {
 	if len(filenames) == 0 {
 		filenames = []string{".env"}
