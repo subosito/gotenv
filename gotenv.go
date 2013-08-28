@@ -25,6 +25,7 @@ func Load(filenames ...string) error {
 		if err != nil {
 			return err
 		}
+		defer f.Close()
 
 		Parse(f)
 	}
