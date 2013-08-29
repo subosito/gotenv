@@ -132,10 +132,6 @@ var fixtures = []struct {
 
 func TestParse(t *testing.T) {
 	for i, tt := range formats {
-
-		// reset environments
-		os.Clearenv()
-
 		if tt.preset {
 			os.Setenv("FOO", "test")
 		}
@@ -149,6 +145,8 @@ func TestParse(t *testing.T) {
 			t.Logf("%q\n", tt.in)
 			t.Errorf("(%d) %s != %s\n", i, x, o)
 		}
+
+		os.Clearenv()
 	}
 }
 
@@ -162,7 +160,28 @@ func TestLoad(t *testing.T) {
 			}
 		}
 
-		// reset environments
 		os.Clearenv()
+	}
+}
+
+func TestLoadEnv(t *testing.T) {
+	Load()
+
+	tkey := "HELLO"
+	val := "world"
+
+	if tval := os.Getenv(tkey); tval != val {
+		t.Errorf("%s => %s != %s", tkey, tval, val)
+	}
+
+	os.Clearenv()
+}
+
+func TestLoadNonExist(t *testing.T) {
+	file := ".nonexist.env"
+
+	err := Load(file)
+	if err == nil {
+		t.Errorf("Load(`%s`) => error: `no such file or directory` != nil", file)
 	}
 }
