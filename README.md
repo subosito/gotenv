@@ -48,20 +48,28 @@ That's it :)
 
 Besides loading from file, gotenv also support parsing environment variables from a string. gotenv provides functions for that purpose:
 
-For single line string:
+- for single line string:
 
 ```go
-gotenv.ParseLine(`FOO="bar"`)      // map[string]string{"FOO": "bar"}
+pair, ok := gotenv.ParseLine(`FOO="bar"`)
+if ok {
+	fmt.Printf("%+v\n", pair) // map[string]string{"FOO": "bar"}
+}
 ```
 
-For multiline string (sure, you can use for single line string too):
+- for multiline string _(can use for single line string too)_:
 
 ```go
-gotenv.Parse(`FOO="bar"`)          // []map[string]string{{"FOO": "bar"}}
-gotenv.Parse("FOO=test\nBAR=$FOO") // []map[string]string{{"FOO": "test"}, {"BAR": "test"}}
+// import "strings"
+
+pairs = gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
+fmt.Printf("%+v\n", pairs) // []map[string]string{{"FOO": "test"}, {"BAR": "test"}}
+
+pairs := gotenv.Parse(strings.NewReader(`FOO="bar"`))
+fmt.Printf("%+v\n", pairs) // []map[string]string{{"FOO": "bar"}}
 ```
 
-### Formats
+## Formats
 
 The gotenv supports various format for the `.env` file, you can see more formats on [fixtures](./fixtures) folder.
 
