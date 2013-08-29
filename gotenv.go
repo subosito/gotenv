@@ -1,4 +1,4 @@
-// package gotenv provides functionality to load environment variables from `.env` file
+// package gotenv provides functionality to dynamically load the environment variables
 package gotenv
 
 import (
@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	LINE     = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
-	VARIABLE = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
+	linePattern     = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
+	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
 )
 
 // By default, it will load `.env` file on the current path and set the environment variables. You can supply filenames parameter to load your desired files.
@@ -37,7 +37,7 @@ func Parse(r io.Reader) (out []map[string]string) {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		et, ok := ParseLine(scanner.Text())
+		et, ok := parseLine(scanner.Text())
 		if ok {
 			out = append(out, et)
 		}
@@ -46,8 +46,8 @@ func Parse(r io.Reader) (out []map[string]string) {
 	return
 }
 
-func ParseLine(s string) (map[string]string, bool) {
-	r := regexp.MustCompile(LINE)
+func parseLine(s string) (map[string]string, bool) {
+	r := regexp.MustCompile(linePattern)
 	matches := r.FindStringSubmatch(s)
 	if len(matches) == 0 {
 		return nil, false
@@ -73,7 +73,7 @@ func ParseLine(s string) (map[string]string, bool) {
 		val = re.ReplaceAllString(val, "$1")
 	}
 
-	rv := regexp.MustCompile(VARIABLE)
+	rv := regexp.MustCompile(variablePattern)
 	xv := rv.FindStringSubmatch(val)
 
 	if len(xv) > 0 {
