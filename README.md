@@ -4,7 +4,7 @@ Load environment variables dynamically in Go.
 
 |-              | -                                                  |
 |---------------|----------------------------------------------------|
-| Build Status  | [![Build Status][drone-img]][drone-url]          |
+| Build Status  | [![Build Status][drone-img]][drone-url]            |
 | Coverage      | [![Coverage Status][coveralls-img]][coveralls-url] |
 | Documentation | http://godoc.org/github.com/subosito/gotenv        |
 
@@ -76,10 +76,10 @@ Just in case you want to parse environment variables from any `io.Reader`, goten
 // import "strings"
 
 pairs := gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
-fmt.Printf("%+v\n", pairs) // []map[string]string{{"FOO": "test"}, {"BAR": "test"}}
+// []map[string]string{{"FOO": "test"}, {"BAR": "test"}}
 
 pairs = gotenv.Parse(strings.NewReader(`FOO="bar"`))
-fmt.Printf("%+v\n", pairs) // []map[string]string{{"FOO": "bar"}}
+// []map[string]string{{"FOO": "bar"}}
 ```
 
 Parse ignores invalid lines and returns `[]map[string]string` of exported environment variables.
@@ -90,10 +90,6 @@ The gotenv supports various format for defining environment variables. You can s
 
 - [fixtures](./fixtures)
 - [gotenv_test.go](./gotenv_test.go)
-
-## TODO
-
-- Write proper documentation
 
 ## Notes
 
