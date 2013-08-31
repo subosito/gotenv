@@ -76,13 +76,13 @@ Just in case you want to parse environment variables from any `io.Reader`, goten
 // import "strings"
 
 pairs := gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
-// []map[string]string{{"FOO": "test"}, {"BAR": "test"}}
+// gotenv.Env{"FOO": "test", "BAR": "test"}
 
 pairs = gotenv.Parse(strings.NewReader(`FOO="bar"`))
-// []map[string]string{{"FOO": "bar"}}
+// gotenv.Env{"FOO": "bar"}
 ```
 
-Parse ignores invalid lines and returns `[]map[string]string` of exported environment variables.
+Parse ignores invalid lines and returns `Env` of exported environment variables.
 
 ### Formats
 

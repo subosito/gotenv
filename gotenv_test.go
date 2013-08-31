@@ -9,96 +9,96 @@ import (
 
 var formats = []struct {
 	in     string
-	out    []map[string]string
+	out    Env
 	preset bool
 }{
 	// parses unquoted values
-	{`FOO=bar`, []map[string]string{{"FOO": "bar"}}, false},
+	{`FOO=bar`, Env{"FOO": "bar"}, false},
 
 	// parses values with spaces around equal sign
-	{`FOO =bar`, []map[string]string{{"FOO": "bar"}}, false},
-	{`FOO= bar`, []map[string]string{{"FOO": "bar"}}, false},
+	{`FOO =bar`, Env{"FOO": "bar"}, false},
+	{`FOO= bar`, Env{"FOO": "bar"}, false},
 
 	// parses double quoted values
-	{`FOO="bar"`, []map[string]string{{"FOO": "bar"}}, false},
+	{`FOO="bar"`, Env{"FOO": "bar"}, false},
 
 	// parses single quoted values
-	{`FOO='bar'`, []map[string]string{{"FOO": "bar"}}, false},
+	{`FOO='bar'`, Env{"FOO": "bar"}, false},
 
 	// parses escaped double quotes
-	{`FOO="escaped\"bar"`, []map[string]string{{"FOO": `escaped"bar`}}, false},
+	{`FOO="escaped\"bar"`, Env{"FOO": `escaped"bar`}, false},
 
 	// parses empty values
-	{`FOO=`, []map[string]string{{"FOO": ""}}, false},
+	{`FOO=`, Env{"FOO": ""}, false},
 
 	// expands variables found in values
-	{"FOO=test\nBAR=$FOO", []map[string]string{{"FOO": "test"}, {"BAR": "test"}}, false},
+	{"FOO=test\nBAR=$FOO", Env{"FOO": "test", "BAR": "test"}, false},
 
 	// parses variables wrapped in brackets
-	{"FOO=test\nBAR=${FOO}bar", []map[string]string{{"FOO": "test"}, {"BAR": "testbar"}}, false},
+	{"FOO=test\nBAR=${FOO}bar", Env{"FOO": "test", "BAR": "testbar"}, false},
 
 	// reads variables from ENV when expanding if not found in local env
-	{`BAR=$FOO`, []map[string]string{{"BAR": "test"}}, true},
+	{`BAR=$FOO`, Env{"BAR": "test"}, true},
 
 	// expands undefined variables to an empty string
-	{`BAR=$FOO`, []map[string]string{{"BAR": ""}}, false},
+	{`BAR=$FOO`, Env{"BAR": ""}, false},
 
 	// expands variables in quoted strings
-	{"FOO=test\nBAR='quote $FOO'", []map[string]string{{"FOO": "test"}, {"BAR": "quote test"}}, false},
+	{"FOO=test\nBAR='quote $FOO'", Env{"FOO": "test", "BAR": "quote test"}, false},
 
 	// does not expand escaped variables
-	{`FOO="foo\$BAR"`, []map[string]string{{"FOO": "foo$BAR"}}, false},
-	{`FOO="foo\${BAR}"`, []map[string]string{{"FOO": "foo${BAR}"}}, false},
+	{`FOO="foo\$BAR"`, Env{"FOO": "foo$BAR"}, false},
+	{`FOO="foo\${BAR}"`, Env{"FOO": "foo${BAR}"}, false},
 
 	// parses yaml style options
-	{"OPTION_A: 1", []map[string]string{{"OPTION_A": "1"}}, false},
+	{"OPTION_A: 1", Env{"OPTION_A": "1"}, false},
 
 	// parses export keyword
-	{"export OPTION_A=2", []map[string]string{{"OPTION_A": "2"}}, false},
+	{"export OPTION_A=2", Env{"OPTION_A": "2"}, false},
 
 	// expands newlines in quoted strings
-	{`FOO="bar\nbaz"`, []map[string]string{{"FOO": "bar\nbaz"}}, false},
+	{`FOO="bar\nbaz"`, Env{"FOO": "bar\nbaz"}, false},
 
 	// parses varibales with "." in the name
-	{`FOO.BAR=foobar`, []map[string]string{{"FOO.BAR": "foobar"}}, false},
+	{`FOO.BAR=foobar`, Env{"FOO.BAR": "foobar"}, false},
 
 	// strips unquoted values
-	{`foo=bar `, []map[string]string{{"foo": "bar"}}, false}, // not 'bar '
+	{`foo=bar `, Env{"foo": "bar"}, false}, // not 'bar '
 
 	// ignores empty lines
-	{"\n \t  \nfoo=bar\n \nfizz=buzz", []map[string]string{{"foo": "bar"}, {"fizz": "buzz"}}, false},
+	{"\n \t  \nfoo=bar\n \nfizz=buzz", Env{"foo": "bar", "fizz": "buzz"}, false},
 
 	// ignores inline comments
-	{"foo=bar # this is foo", []map[string]string{{"foo": "bar"}}, false},
+	{"foo=bar # this is foo", Env{"foo": "bar"}, false},
 
 	// allows # in quoted value
-	{`foo="bar#baz" # comment`, []map[string]string{{"foo": "bar#baz"}}, false},
+	{`foo="bar#baz" # comment`, Env{"foo": "bar#baz"}, false},
 
 	// ignores comment lines
-	{"\n\n\n # HERE GOES FOO \nfoo=bar", []map[string]string{{"foo": "bar"}}, false},
+	{"\n\n\n # HERE GOES FOO \nfoo=bar", Env{"foo": "bar"}, false},
 
 	// parses # in quoted values
-	{`foo="ba#r"`, []map[string]string{{"foo": "ba#r"}}, false},
-	{"foo='ba#r'", []map[string]string{{"foo": "ba#r"}}, false},
+	{`foo="ba#r"`, Env{"foo": "ba#r"}, false},
+	{"foo='ba#r'", Env{"foo": "ba#r"}, false},
 
 	// incorrect line format
-	{"lol$wut", []map[string]string{}, false},
+	{"lol$wut", Env{}, false},
 }
 
 var fixtures = []struct {
 	filename string
-	results  map[string]string
+	results  Env
 }{
 	{
 		"fixtures/exported.env",
-		map[string]string{
+		Env{
 			"OPTION_A": "2",
 			"OPTION_B": `\n`,
 		},
 	},
 	{
 		"fixtures/plain.env",
-		map[string]string{
+		Env{
 			"OPTION_A": "1",
 			"OPTION_B": "2",
 			"OPTION_C": "3",
@@ -108,7 +108,7 @@ var fixtures = []struct {
 	},
 	{
 		"fixtures/quoted.env",
-		map[string]string{
+		Env{
 			"OPTION_A": "1",
 			"OPTION_B": "2",
 			"OPTION_C": "",
@@ -121,7 +121,7 @@ var fixtures = []struct {
 	},
 	{
 		"fixtures/yaml.env",
-		map[string]string{
+		Env{
 			"OPTION_A": "1",
 			"OPTION_B": "2",
 			"OPTION_C": "",

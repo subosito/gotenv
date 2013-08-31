@@ -14,6 +14,8 @@ const (
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
 )
 
+type Env map[string]string
+
 // By default, it will load `.env` file on the current path and set the environment variables. You can supply filenames parameter to load your desired files.
 func Load(filenames ...string) error {
 	if len(filenames) == 0 {
@@ -33,20 +35,25 @@ func Load(filenames ...string) error {
 	return nil
 }
 
-func Parse(r io.Reader) (out []map[string]string) {
+func Parse(r io.Reader) Env {
+	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
 		et, ok := parseLine(scanner.Text())
 		if ok {
-			out = append(out, et)
+			// set environment
+			for key, val := range et {
+				os.Setenv(key, val)
+				env[key] = val
+			}
 		}
 	}
 
-	return
+	return env
 }
 
-func parseLine(s string) (map[string]string, bool) {
+func parseLine(s string) (Env, bool) {
 	r := regexp.MustCompile(linePattern)
 	matches := r.FindStringSubmatch(s)
 	if len(matches) == 0 {
@@ -88,8 +95,5 @@ func parseLine(s string) (map[string]string, bool) {
 		val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
 	}
 
-	// set environment
-	os.Setenv(key, val)
-
-	return map[string]string{key: val}, true
+	return Env{key: val}, true
 }
