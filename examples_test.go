@@ -1,13 +1,15 @@
 package gotenv_test
 
 import (
+	"strings"
+	"fmt"
 	"github.com/subosito/gotenv"
 )
 
-func ExampleLoad() {
-	// Load default .env file
-	gotenv.Load()
+func ExampleParse() {
+	pairs := gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
+	fmt.Printf("%+v\n", pairs) // gotenv.Env{"FOO": "test", "BAR": "test"}
 
-	// Load particular files
-	gotenv.Load("production.env", "credentials")
+	pairs = gotenv.Parse(strings.NewReader(`FOO="bar"`))
+	fmt.Printf("%+v\n", pairs) // gotenv.Env{"FOO": "bar"}
 }

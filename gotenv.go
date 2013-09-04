@@ -1,4 +1,4 @@
-// package gotenv provides functionality to dynamically load the environment variables
+// Package gotenv provides functionality to dynamically load the environment variables
 package gotenv
 
 import (
@@ -10,13 +10,28 @@ import (
 )
 
 const (
+	// Pattern for detecting valid line format
 	linePattern     = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
+
+	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
 )
 
+// Holds key/value pair of valid environment variable
 type Env map[string]string
 
-// By default, it will load `.env` file on the current path and set the environment variables. You can supply filenames parameter to load your desired files.
+/*
+Load is function to load a file or multiple files and then export the valid variables which found into environment variables.
+When it's called with no argument, it will load `.env` file on the current path and set the environment variables.
+Otherwise, it will loop over the filenames parameter and set the proper environment variables.
+
+	// processing `.env`
+	gotenv.Load()
+
+	// processing multiple files
+	gotenv.Load("production.env", "credentials")
+
+*/
 func Load(filenames ...string) error {
 	if len(filenames) == 0 {
 		filenames = []string{".env"}
@@ -39,6 +54,9 @@ func Load(filenames ...string) error {
 	return nil
 }
 
+// Parse if a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
+// It expands the value of a variable from environment variable, but does not set the value to the environment itself.
+// This function is skipping any invalid lines and only processing the valid one.
 func Parse(r io.Reader) Env {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
