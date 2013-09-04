@@ -29,7 +29,11 @@ func Load(filenames ...string) error {
 		}
 		defer f.Close()
 
-		Parse(f)
+		// set environment
+		env := Parse(f)
+		for key, val := range env {
+			os.Setenv(key, val)
+		}
 	}
 
 	return nil
@@ -40,24 +44,17 @@ func Parse(r io.Reader) Env {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		et, ok := parseLine(scanner.Text())
-		if ok {
-			// set environment
-			for key, val := range et {
-				os.Setenv(key, val)
-				env[key] = val
-			}
-		}
+		parseLine(scanner.Text(), env)
 	}
 
 	return env
 }
 
-func parseLine(s string) (Env, bool) {
+func parseLine(s string, env Env) {
 	r := regexp.MustCompile(linePattern)
 	matches := r.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return nil, false
+		return
 	}
 
 	key := matches[1]
@@ -85,15 +82,20 @@ func parseLine(s string) (Env, bool) {
 
 	if len(xv) > 0 {
 		var replace string
+		var ok bool
 
 		if xv[1] == "\\" {
 			replace = strings.Join(xv[2:4], "")
 		} else {
-			replace = os.Getenv(xv[4])
+			replace, ok = env[xv[4]]
+			if !ok {
+				replace = os.Getenv(xv[4])
+			}
 		}
 
 		val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
 	}
 
-	return Env{key: val}, true
+	env[key] = val
+	return
 }

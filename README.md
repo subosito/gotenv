@@ -82,7 +82,7 @@ pairs = gotenv.Parse(strings.NewReader(`FOO="bar"`))
 // gotenv.Env{"FOO": "bar"}
 ```
 
-Parse ignores invalid lines and returns `Env` of exported environment variables.
+Parse ignores invalid lines and returns `Env` of valid environment variables.
 
 ### Formats
 
