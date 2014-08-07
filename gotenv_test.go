@@ -83,9 +83,6 @@ var formats = []struct {
 	// parses # in quoted values
 	{`foo="ba#r"`, Env{"foo": "ba#r"}, false},
 	{"foo='ba#r'", Env{"foo": "ba#r"}, false},
-
-	// incorrect line format
-	{"lol$wut", Env{}, false},
 }
 
 var fixtures = []struct {
@@ -143,6 +140,13 @@ func TestParse(t *testing.T) {
 		assert.Equal(t, exp, tt.out)
 		os.Clearenv()
 	}
+}
+
+func TestStrictParse(t *testing.T) {
+	// incorrect line format
+	env, err := StrictParse(strings.NewReader("lol$wut"))
+	assert.NotNil(t, err)
+	assert.Equal(t, Env{}, env)
 }
 
 func TestLoad(t *testing.T) {

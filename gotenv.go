@@ -3,6 +3,8 @@ package gotenv
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -54,25 +56,42 @@ func Load(filenames ...string) error {
 	return nil
 }
 
-// Parse if a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
+// Parse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
 // It expands the value of a variable from environment variable, but does not set the value to the environment itself.
 // This function is skipping any invalid lines and only processing the valid one.
 func Parse(r io.Reader) Env {
+	env, _ := StrictParse(r)
+	return env
+}
+
+// StrictParse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
+// It expands the value of a variable from environment variable, but does not set the value to the environment itself.
+// This function is returning an error if there is any invalid lines.
+func StrictParse(r io.Reader) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		parseLine(scanner.Text(), env)
+		err := parseLine(scanner.Text(), env)
+		if err != nil {
+			return env, err
+		}
 	}
 
-	return env
+	return env, nil
 }
 
-func parseLine(s string, env Env) {
+func parseLine(s string, env Env) error {
 	r := regexp.MustCompile(linePattern)
 	matches := r.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return
+		st := strings.TrimSpace(s)
+
+		if (st == "") || strings.HasPrefix(st, "#") {
+			return nil
+		}
+
+		return errors.New(fmt.Sprintf("Line `%s` doesn't match format", s))
 	}
 
 	key := matches[1]
@@ -120,5 +139,5 @@ func parseLine(s string, env Env) {
 	}
 
 	env[key] = val
-	return
+	return nil
 }
