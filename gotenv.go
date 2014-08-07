@@ -11,7 +11,7 @@ import (
 
 const (
 	// Pattern for detecting valid line format
-	linePattern     = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
+	linePattern = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
 
 	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
@@ -81,6 +81,9 @@ func parseLine(s string, env Env) {
 	// determine if string has quote prefix
 	hq := strings.HasPrefix(val, `"`)
 
+	// determine if string has single quote prefix
+	hs := strings.HasPrefix(val, `'`)
+
 	// trim whitespace
 	val = strings.Trim(val, " ")
 
@@ -111,7 +114,9 @@ func parseLine(s string, env Env) {
 			}
 		}
 
-		val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
+		if !hs {
+			val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
+		}
 	}
 
 	env[key] = val

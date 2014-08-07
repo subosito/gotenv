@@ -1,9 +1,9 @@
 package gotenv_test
 
 import (
-	"strings"
 	"fmt"
 	"github.com/subosito/gotenv"
+	"strings"
 )
 
 func ExampleParse() {

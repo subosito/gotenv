@@ -44,7 +44,10 @@ var formats = []struct {
 	{`BAR=$FOO`, Env{"BAR": ""}, false},
 
 	// expands variables in quoted strings
-	{"FOO=test\nBAR='quote $FOO'", Env{"FOO": "test", "BAR": "quote test"}, false},
+	{"FOO=test\nBAR=\"quote $FOO\"", Env{"FOO": "test", "BAR": "quote test"}, false},
+
+	// does not expand variables in single quoted strings
+	{"BAR='quote $FOO'", Env{"BAR": "quote $FOO"}, false},
 
 	// does not expand escaped variables
 	{`FOO="foo\$BAR"`, Env{"FOO": "foo$BAR"}, false},
@@ -59,7 +62,7 @@ var formats = []struct {
 	// expands newlines in quoted strings
 	{`FOO="bar\nbaz"`, Env{"FOO": "bar\nbaz"}, false},
 
-	// parses varibales with "." in the name
+	// parses variables with "." in the name
 	{`FOO.BAR=foobar`, Env{"FOO.BAR": "foobar"}, false},
 
 	// strips unquoted values
