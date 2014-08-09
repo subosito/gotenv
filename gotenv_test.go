@@ -183,6 +183,11 @@ func TestLoad_overriding(t *testing.T) {
 	os.Clearenv()
 }
 
+func TestLoad_invalidEnv(t *testing.T) {
+	err := Load(".env.invalid")
+	assert.NotNil(t, err)
+}
+
 func TestLoad_nonExist(t *testing.T) {
 	file := ".env.not.exist"
 
@@ -219,7 +224,7 @@ func TestMustLoad_default(t *testing.T) {
 }
 
 func TestMustLoad_nonExist(t *testing.T) {
-	assert.Panics(t, func() { MustLoad(".env.not.exist") }, "Caling Load with non exist file SHOULD panic")
+	assert.Panics(t, func() { MustLoad(".env.not.exist") }, "Caling MustLoad with non exist file SHOULD panic")
 }
 
 func TestOverLoad_overriding(t *testing.T) {
@@ -231,6 +236,10 @@ func TestOverLoad_overriding(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "world", os.Getenv(k))
 	os.Clearenv()
+}
+
+func TestMustOverLoad_nonExist(t *testing.T) {
+	assert.Panics(t, func() { MustOverLoad(".env.not.exist") }, "Caling MustOverLoad with non exist file SHOULD panic")
 }
 
 func TestApply(t *testing.T) {
