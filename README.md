@@ -6,7 +6,7 @@ Load environment variables dynamically in Go.
 |---------------|----------------------------------------------------|
 | Build Status  | [![Build Status][drone-img]][drone-url]            |
 | Coverage      | [![Coverage Status][coveralls-img]][coveralls-url] |
-| Documentation | http://godoc.org/github.com/subosito/gotenv        |
+| Documentation | [![GoDoc][godoc-img]][godoc-url]                   |
 
 ## Installation
 
@@ -99,4 +99,5 @@ The gotenv package is a Go port of [`dotenv`](https://github.com/bkeepers/dotenv
 [drone-url]: https://drone.io/github.com/subosito/gotenv/latest
 [coveralls-img]: https://coveralls.io/repos/subosito/gotenv/badge.png?branch=master
 [coveralls-url]: https://coveralls.io/r/subosito/gotenv?branch=master
-
+[godoc-img]: https://godoc.org/github.com/subosito/gotenv?status.png
+[godoc-url]: https://godoc.org/github.com/subosito/gotenv
