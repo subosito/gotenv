@@ -151,7 +151,8 @@ func TestStrictParse(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	for _, tt := range fixtures {
-		Load(tt.filename)
+		err := Load(tt.filename)
+		assert.Nil(t, err)
 
 		for key, val := range tt.results {
 			assert.Equal(t, val, os.Getenv(key))
@@ -161,21 +162,91 @@ func TestLoad(t *testing.T) {
 	}
 }
 
-func TestLoadEnv(t *testing.T) {
-	Load()
+func TestLoad_default(t *testing.T) {
+	k := "HELLO"
+	v := "world"
 
-	tkey := "HELLO"
-	val := "world"
-
-	assert.Equal(t, val, os.Getenv(tkey))
+	err := Load()
+	assert.Nil(t, err)
+	assert.Equal(t, v, os.Getenv(k))
 	os.Clearenv()
 }
 
-func TestLoadNonExist(t *testing.T) {
-	file := ".nonexist.env"
+func TestLoad_overriding(t *testing.T) {
+	k := "HELLO"
+	v := "universe"
+
+	os.Setenv(k, v)
+	err := Load()
+	assert.Nil(t, err)
+	assert.Equal(t, v, os.Getenv(k))
+	os.Clearenv()
+}
+
+func TestLoad_nonExist(t *testing.T) {
+	file := ".env.not.exist"
 
 	err := Load(file)
 	if err == nil {
 		t.Errorf("Load(`%s`) => error: `no such file or directory` != nil", file)
 	}
+}
+
+func TestMustLoad(t *testing.T) {
+	for _, tt := range fixtures {
+		assert.NotPanics(t, func() {
+			MustLoad(tt.filename)
+
+			for key, val := range tt.results {
+				assert.Equal(t, val, os.Getenv(key))
+			}
+
+			os.Clearenv()
+		}, "Caling MustLoad should NOT panic")
+	}
+}
+
+func TestMustLoad_default(t *testing.T) {
+	assert.NotPanics(t, func() {
+		MustLoad()
+
+		tkey := "HELLO"
+		val := "world"
+
+		assert.Equal(t, val, os.Getenv(tkey))
+		os.Clearenv()
+	}, "Caling Load with no arguments should NOT panic")
+}
+
+func TestMustLoad_nonExist(t *testing.T) {
+	assert.Panics(t, func() { MustLoad(".env.not.exist") }, "Caling Load with non exist file SHOULD panic")
+}
+
+func TestOverLoad_overriding(t *testing.T) {
+	k := "HELLO"
+	v := "universe"
+
+	os.Setenv(k, v)
+	err := OverLoad()
+	assert.Nil(t, err)
+	assert.Equal(t, "world", os.Getenv(k))
+	os.Clearenv()
+}
+
+func TestApply(t *testing.T) {
+	os.Setenv("HELLO", "world")
+	r := strings.NewReader("HELLO=universe")
+	err := Apply(r)
+	assert.Nil(t, err)
+	assert.Equal(t, "world", os.Getenv("HELLO"))
+	os.Clearenv()
+}
+
+func TestOverApply(t *testing.T) {
+	os.Setenv("HELLO", "world")
+	r := strings.NewReader("HELLO=universe")
+	err := OverApply(r)
+	assert.Nil(t, err)
+	assert.Equal(t, "universe", os.Getenv("HELLO"))
+	os.Clearenv()
 }

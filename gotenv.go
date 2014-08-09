@@ -3,7 +3,6 @@ package gotenv
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -19,22 +18,60 @@ const (
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
 )
 
-// Holds key/value pair of valid environment variable
+// Env holds key/value pair of valid environment variable
 type Env map[string]string
 
 /*
-Load is function to load a file or multiple files and then export the valid variables which found into environment variables.
+Load is function to load a file or multiple files and then export the valid variables into environment variables if they are not exists.
 When it's called with no argument, it will load `.env` file on the current path and set the environment variables.
 Otherwise, it will loop over the filenames parameter and set the proper environment variables.
-
-	// processing `.env`
-	gotenv.Load()
-
-	// processing multiple files
-	gotenv.Load("production.env", "credentials")
-
 */
 func Load(filenames ...string) error {
+	return loadenv(false, filenames...)
+}
+
+/*
+MustLoad is similar function like Load but will panic when supplied files are not exist.
+*/
+func MustLoad(filenames ...string) {
+	err := Load(filenames...)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+/*
+OverLoad is function to load a file or multiple files and then export and override the valid variables into environment variables.
+*/
+func OverLoad(filenames ...string) error {
+	return loadenv(true, filenames...)
+}
+
+/*
+MustOverLoad is similar function like OverLoad but will panic when supplied files are not exist.
+*/
+func MustOverLoad(filenames ...string) {
+	err := OverLoad(filenames...)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+/*
+Apply is function to load an io Reader then export the valid variables into environment variables if they are not exist.
+*/
+func Apply(r io.Reader) error {
+	return parset(r, false)
+}
+
+/*
+OverApply is function to load an io Reader then export and override the valid variables into environment variables.
+*/
+func OverApply(r io.Reader) error {
+	return parset(r, true)
+}
+
+func loadenv(override bool, filenames ...string) error {
 	if len(filenames) == 0 {
 		filenames = []string{".env"}
 	}
@@ -45,15 +82,34 @@ func Load(filenames ...string) error {
 			return err
 		}
 		defer f.Close()
-
-		// set environment
-		env := Parse(f)
-		for key, val := range env {
-			os.Setenv(key, val)
-		}
+		return parset(f, override)
 	}
 
 	return nil
+}
+
+// parse and set :)
+func parset(r io.Reader, override bool) error {
+	env, err := StrictParse(r)
+	if err != nil {
+		return err
+	}
+
+	for key, val := range env {
+		setenv(key, val, override)
+	}
+
+	return nil
+}
+
+func setenv(key, val string, override bool) {
+	if override {
+		os.Setenv(key, val)
+	} else {
+		if os.Getenv(key) == "" {
+			os.Setenv(key, val)
+		}
+	}
 }
 
 // Parse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
@@ -91,7 +147,7 @@ func parseLine(s string, env Env) error {
 			return nil
 		}
 
-		return errors.New(fmt.Sprintf("Line `%s` doesn't match format", s))
+		return fmt.Errorf("Line `%s` doesn't match format", s)
 	}
 
 	key := matches[1]
