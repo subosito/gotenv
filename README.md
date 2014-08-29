@@ -1,12 +1,10 @@
 # gotenv
 
-Load environment variables dynamically in Go.
+[![Build Status][drone-img]][drone-url]
+[![Coverage Status][coveralls-img]][coveralls-url]
+[![GoDoc][godoc-img]][godoc-url]
 
-|-              | -                                                  |
-|---------------|----------------------------------------------------|
-| Build Status  | [![Build Status][drone-img]][drone-url]            |
-| Coverage      | [![Coverage Status][coveralls-img]][coveralls-url] |
-| Documentation | [![GoDoc][godoc-img]][godoc-url]                   |
+Load environment variables dynamically in Go.
 
 ## Installation
 
