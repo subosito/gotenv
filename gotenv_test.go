@@ -38,7 +38,7 @@ var formats = []struct {
 	{"FOO=test\nBAR=${FOO}bar", Env{"FOO": "test", "BAR": "testbar"}, false},
 
 	// reads variables from ENV when expanding if not found in local env
-	//{`BAR=$FOO`, Env{"BAR": "test"}, true},
+	{`BAR=$FOO`, Env{"BAR": "test"}, true},
 
 	// expands undefined variables to an empty string
 	{`BAR=$FOO`, Env{"BAR": ""}, false},
