@@ -1,8 +1,8 @@
 # gotenv
 
-[![Build Status](https://drone.io/github.com/subosito/gotenv/status.png)](https://drone.io/github.com/subosito/gotenv/latest)
-[![Coverage Status](http://img.shields.io/coveralls/subosito/gotenv.svg?style=flat-square)](https://coveralls.io/r/subosito/gotenv?branch=master)
-[![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.png)](https://godoc.org/github.com/subosito/gotenv)
+[![Build Status](https://travis-ci.org/subosito/gotenv.svg?branch=master)](https://travis-ci.org/subosito/gotenv)
+[![Coverage Status](https://img.shields.io/codecov/c/github/subosito/gotenv/master.svg?maxAge=2592000)](https://codecov.io/gh/subosito/gotenv)
+[![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.svg)](https://godoc.org/github.com/subosito/gotenv)
 
 Load environment variables dynamically in Go.
 
