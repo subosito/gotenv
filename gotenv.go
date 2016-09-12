@@ -171,6 +171,8 @@ func parseLine(s string, env Env) error {
 
 	if hq {
 		val = strings.Replace(val, `\n`, "\n", -1)
+		val = strings.Replace(val, `\r`, "\r", -1)
+
 		// Unescape all characters except $ so variables can be escaped properly
 		re := regexp.MustCompile(`\\([^$])`)
 		val = re.ReplaceAllString(val, "$1")
@@ -194,6 +196,24 @@ func parseLine(s string, env Env) error {
 
 		if !hs {
 			val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
+		}
+	}
+
+	if strings.Contains(val, "=") {
+		if !(val == "\n" || val == "\r") {
+			kv := strings.Split(val, "\n")
+
+			if len(kv) == 1 {
+				kv = strings.Split(val, "\r")
+			}
+
+			if len(kv) > 1 {
+				val = kv[0]
+
+				for i := 1; i < len(kv); i++ {
+					parseLine(kv[i], env)
+				}
+			}
 		}
 	}
 

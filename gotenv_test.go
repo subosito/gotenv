@@ -1,10 +1,11 @@
 package gotenv
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var formats = []struct {
@@ -83,6 +84,15 @@ var formats = []struct {
 	// parses # in quoted values
 	{`foo="ba#r"`, Env{"foo": "ba#r"}, false},
 	{"foo='ba#r'", Env{"foo": "ba#r"}, false},
+
+	// supports carriage return
+	{"FOO=bar\rbaz=fbb", Env{"FOO": "bar", "baz": "fbb"}, false},
+
+	// supports carriage return combine with new line
+	{"FOO=bar\r\nbaz=fbb", Env{"FOO": "bar", "baz": "fbb"}, false},
+
+	// expands carriage return in quoted strings
+	{`FOO="bar\rbaz"`, Env{"FOO": "bar\rbaz"}, false},
 }
 
 var fixtures = []struct {
@@ -137,7 +147,7 @@ func TestParse(t *testing.T) {
 		}
 
 		exp := Parse(strings.NewReader(tt.in))
-		assert.Equal(t, exp, tt.out)
+		assert.Equal(t, tt.out, exp)
 		os.Clearenv()
 	}
 }
