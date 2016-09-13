@@ -141,9 +141,10 @@ func StrictParse(r io.Reader) (Env, error) {
 }
 
 func parseLine(s string, env Env) error {
-	r := regexp.MustCompile(linePattern)
-	matches := r.FindStringSubmatch(s)
-	if len(matches) == 0 {
+	rl := regexp.MustCompile(linePattern)
+	rm := rl.FindStringSubmatch(s)
+
+	if len(rm) == 0 {
 		st := strings.TrimSpace(s)
 
 		if (st == "") || strings.HasPrefix(st, "#") {
@@ -153,14 +154,14 @@ func parseLine(s string, env Env) error {
 		return fmt.Errorf("Line `%s` doesn't match format", s)
 	}
 
-	key := matches[1]
-	val := matches[2]
+	key := rm[1]
+	val := rm[2]
 
 	// determine if string has quote prefix
-	hq := strings.HasPrefix(val, `"`)
+	hdq := strings.HasPrefix(val, `"`)
 
 	// determine if string has single quote prefix
-	hs := strings.HasPrefix(val, `'`)
+	hsq := strings.HasPrefix(val, `'`)
 
 	// trim whitespace
 	val = strings.Trim(val, " ")
@@ -169,7 +170,7 @@ func parseLine(s string, env Env) error {
 	rq := regexp.MustCompile(`\A(['"])(.*)(['"])\z`)
 	val = rq.ReplaceAllString(val, "$2")
 
-	if hq {
+	if hdq {
 		val = strings.Replace(val, `\n`, "\n", -1)
 		val = strings.Replace(val, `\r`, "\r", -1)
 
@@ -179,25 +180,30 @@ func parseLine(s string, env Env) error {
 	}
 
 	rv := regexp.MustCompile(variablePattern)
-	xv := rv.FindStringSubmatch(val)
-
-	if len(xv) > 0 {
-		var replace string
-		var ok bool
-
-		if xv[1] == "\\" {
-			replace = strings.Join(xv[2:4], "")
-		} else {
-			replace, ok = env[xv[4]]
-			if !ok {
-				replace = os.Getenv(xv[4])
-			}
+	fv := func(s string) string {
+		if strings.HasPrefix(s, "\\") {
+			return strings.TrimPrefix(s, "\\")
 		}
 
-		if !hs {
-			val = strings.Replace(val, strings.Join(xv[0:1], ""), replace, -1)
+		if hsq {
+			return s
 		}
+
+		sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
+		rn := regexp.MustCompile(sn)
+		mn := rn.FindStringSubmatch(s)
+
+		v := mn[3]
+
+		replace, ok := env[v]
+		if !ok {
+			replace = os.Getenv(v)
+		}
+
+		return replace
 	}
+
+	val = rv.ReplaceAllStringFunc(val, fv)
 
 	if strings.Contains(val, "=") {
 		if !(val == "\n" || val == "\r") {

@@ -53,6 +53,7 @@ var formats = []struct {
 	// does not expand escaped variables
 	{`FOO="foo\$BAR"`, Env{"FOO": "foo$BAR"}, false},
 	{`FOO="foo\${BAR}"`, Env{"FOO": "foo${BAR}"}, false},
+	{"FOO=test\nBAR=\"foo\\${FOO} ${FOO}\"", Env{"FOO": "test", "BAR": "foo${FOO} test"}, false},
 
 	// parses yaml style options
 	{"OPTION_A: 1", Env{"OPTION_A": "1"}, false},
