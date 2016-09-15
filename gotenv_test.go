@@ -1,6 +1,7 @@
 package gotenv
 
 import (
+	"bufio"
 	"os"
 	"strings"
 	"testing"
@@ -206,6 +207,34 @@ func TestLoad_nonExist(t *testing.T) {
 	if err == nil {
 		t.Errorf("Load(`%s`) => error: `no such file or directory` != nil", file)
 	}
+}
+
+func TestLoad_unicodeBOMFixture(t *testing.T) {
+	file := "fixtures/bom.env"
+
+	f, err := os.Open(file)
+	assert.Nil(t, err)
+
+	scanner := bufio.NewScanner(f)
+
+	i := 1
+	bom := string([]byte{239, 187, 191})
+
+	for scanner.Scan() {
+		if i == 1 {
+			line := scanner.Text()
+			assert.True(t, strings.HasPrefix(line, bom))
+		}
+	}
+}
+
+func TestLoad_unicodeBOM(t *testing.T) {
+	file := "fixtures/bom.env"
+
+	err := Load(file)
+	assert.Nil(t, err)
+	assert.Equal(t, "UTF-8", os.Getenv("BOM"))
+	os.Clearenv()
 }
 
 func TestMustLoad(t *testing.T) {

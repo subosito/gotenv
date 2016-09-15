@@ -130,8 +130,19 @@ func StrictParse(r io.Reader) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
+	i := 1
+	bom := string([]byte{239, 187, 191})
+
 	for scanner.Scan() {
-		err := parseLine(scanner.Text(), env)
+		line := scanner.Text()
+
+		if i == 1 {
+			line = strings.TrimPrefix(line, bom)
+		}
+
+		i++
+
+		err := parseLine(line, env)
 		if err != nil {
 			return env, err
 		}
