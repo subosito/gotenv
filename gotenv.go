@@ -15,7 +15,7 @@ const (
 	linePattern = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
 
 	// Pattern for detecting valid variable within a value
-	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)\}?)`
+	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
 )
 
 // Env holds key/value pair of valid environment variable
@@ -203,6 +203,10 @@ func parseLine(s string, env Env) error {
 		sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
 		rn := regexp.MustCompile(sn)
 		mn := rn.FindStringSubmatch(s)
+
+		if len(mn) == 0 {
+			return s
+		}
 
 		v := mn[3]
 

@@ -95,6 +95,12 @@ var formats = []struct {
 
 	// expands carriage return in quoted strings
 	{`FOO="bar\rbaz"`, Env{"FOO": "bar\rbaz"}, false},
+
+	// escape $ properly when no alphabets/numbers/_  are followed by it
+	{`FOO="bar\\$ \\$\\$"`, Env{"FOO": "bar$ $$"}, false},
+
+	// ignore $ when it is not escaped and no variable is followed by it
+	{`FOO="bar $ "`, Env{"FOO": "bar $ "}, false},
 }
 
 var fixtures = []struct {
