@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/subosito/gotenv.svg?branch=master)](https://travis-ci.org/subosito/gotenv)
 [![Coverage Status](https://img.shields.io/codecov/c/github/subosito/gotenv/master.svg?maxAge=2592000)](https://codecov.io/gh/subosito/gotenv)
+[![Go Report Card](https://goreportcard.com/badge/subosito/gotenv)](https://goreportcard.com/report/subosito/gotenv)
 [![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.svg)](https://godoc.org/github.com/subosito/gotenv)
 
 Load environment variables dynamically in Go.
