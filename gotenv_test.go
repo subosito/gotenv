@@ -74,6 +74,9 @@ var formats = []struct {
 	// parses export keyword
 	{"export OPTION_A=2", Env{"OPTION_A": "2"}, false},
 
+	// allows export line if you want to do it that way
+	{"OPTION_A=2\nexport OPTION_A", Env{"OPTION_A": "2"}, false},
+
 	// expands newlines in quoted strings
 	{`FOO="bar\nbaz"`, Env{"FOO": "bar\nbaz"}, false},
 
@@ -117,6 +120,18 @@ var formats = []struct {
 
 	// ignore $ when it is not escaped and no variable is followed by it
 	{`FOO="bar $ "`, Env{"FOO": "bar $ "}, false},
+}
+
+var errorFormats = []struct {
+	in  string
+	out Env
+	err error
+}{
+	// allows export line if you want to do it that way and checks for unset variables
+	{"OPTION_A=2\nexport OH_NO_NOT_SET", Env{"OPTION_A": "2"}, ErrFormat{Message: "Line `export OH_NO_NOT_SET` has an unset variable"}},
+
+	// throws an error if line format is incorrect
+	{`lol$wut`, Env{}, ErrFormat{Message: "Line `lol$wut` doesn't match format"}},
 }
 
 var fixtures = []struct {
@@ -177,10 +192,11 @@ func TestParse(t *testing.T) {
 }
 
 func TestStrictParse(t *testing.T) {
-	// incorrect line format
-	env, err := StrictParse(strings.NewReader("lol$wut"))
-	assert.NotNil(t, err)
-	assert.Equal(t, Env{}, env)
+	for _, tt := range errorFormats {
+		env, err := StrictParse(strings.NewReader(tt.in))
+		assert.Equal(t, tt.err, err)
+		assert.Equal(t, tt.out, env)
+	}
 }
 
 func TestLoad(t *testing.T) {
