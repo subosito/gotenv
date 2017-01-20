@@ -21,11 +21,23 @@ var formats = []struct {
 	{`FOO =bar`, Env{"FOO": "bar"}, false},
 	{`FOO= bar`, Env{"FOO": "bar"}, false},
 
+	// parses values with leading spaces
+	{`  FOO=bar`, Env{"FOO": "bar"}, false},
+
+	// parses values with following spaces
+	{`FOO=bar  `, Env{"FOO": "bar"}, false},
+
 	// parses double quoted values
 	{`FOO="bar"`, Env{"FOO": "bar"}, false},
 
+	// parses double quoted values with following spaces
+	{`FOO="bar"  `, Env{"FOO": "bar"}, false},
+
 	// parses single quoted values
 	{`FOO='bar'`, Env{"FOO": "bar"}, false},
+
+	// parses single quoted values with following spaces
+	{`FOO='bar'  `, Env{"FOO": "bar"}, false},
 
 	// parses escaped double quotes
 	{`FOO="escaped\"bar"`, Env{"FOO": `escaped"bar`}, false},
@@ -86,6 +98,10 @@ var formats = []struct {
 	// parses # in quoted values
 	{`foo="ba#r"`, Env{"foo": "ba#r"}, false},
 	{"foo='ba#r'", Env{"foo": "ba#r"}, false},
+
+	// parses # in quoted values with following spaces
+	{`foo="ba#r"  `, Env{"foo": "ba#r"}, false},
+	{`foo='ba#r'  `, Env{"foo": "ba#r"}, false},
 
 	// supports carriage return
 	{"FOO=bar\rbaz=fbb", Env{"FOO": "bar", "baz": "fbb"}, false},

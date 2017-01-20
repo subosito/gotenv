@@ -12,7 +12,7 @@ import (
 
 const (
 	// Pattern for detecting valid line format
-	linePattern = `\A(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?(?:\s*\#.*)?\z`
+	linePattern = `\A\s*(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?\s*(?:\s*\#.*)?\z`
 
 	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
