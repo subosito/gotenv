@@ -118,7 +118,7 @@ func setenv(key, val string, override bool) {
 	if override {
 		os.Setenv(key, val)
 	} else {
-		if os.Getenv(key) == "" {
+		if _, present := os.LookupEnv(key); !present {
 			os.Setenv(key, val)
 		}
 	}
