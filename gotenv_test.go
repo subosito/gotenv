@@ -120,6 +120,9 @@ var formats = []struct {
 
 	// ignore $ when it is not escaped and no variable is followed by it
 	{`FOO="bar $ "`, Env{"FOO": "bar $ "}, false},
+
+	// parses unquoted values with spaces after separator
+	{`FOO= bar`, Env{"FOO": "bar"}, false},
 }
 
 var errorFormats = []struct {
