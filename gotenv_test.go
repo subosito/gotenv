@@ -123,6 +123,9 @@ var formats = []struct {
 
 	// parses unquoted values with spaces after separator
 	{`FOO= bar`, Env{"FOO": "bar"}, false},
+
+	// allows # in quoted value with spaces after separator
+	{`foo= "bar#baz" # comment`, Env{"foo": "bar#baz"}, false},
 }
 
 var errorFormats = []struct {
