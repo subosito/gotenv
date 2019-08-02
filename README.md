@@ -15,37 +15,30 @@ $ go get github.com/subosito/gotenv
 
 ## Usage
 
-Store your configuration to `.env` file on your root directory of your project:
-
-```
-APP_ID=1234567
-APP_SECRET=abcdef
-```
-
-You may also add `export` in front of each line so you can `source` the file in bash:
-
-```bash
-export APP_ID=1234567
-export APP_SECRET=abcdef
-```
-
 Put the gotenv package on your `import` statement:
 
 ```go
 import "github.com/subosito/gotenv"
 ```
 
-Then somewhere on your application code, put:
+By default, `Load` will look for a file called `.env` in the current working directory.
 
 ```go
 gotenv.Load()
 ```
 
-Behind the scene it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure all variables are loaded, say, put it on `init()` function.
+Behind the scene it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure it loads all variables, say, put it on `init()` function.
 
 Once loaded you can use `os.Getenv()` to get the value of the variable.
 
-Here's the final example:
+Let's say you have `.env` file:
+
+```
+APP_ID=1234567
+APP_SECRET=abcdef
+```
+
+Here's the example of your app:
 
 ```go
 package main
@@ -66,7 +59,7 @@ func main() {
 }
 ```
 
-You can also load other than `.env` file if you wish. Just supply filenames when calling `Load()`:
+You can also load other than `.env` file if you wish. Just supply filenames when calling `Load()`. It will load them in order and the first value set for a variable will win.:
 
 ```go
 gotenv.Load(".env.production", "credentials")
@@ -76,7 +69,7 @@ That's it :)
 
 ### Another Scenario
 
-Just in case you want to parse environment variables from any `io.Reader`, gotenv keeps its `Parse()` function as public API so you can utilize that.
+Just in case you want to parse environment variables from any `io.Reader`, gotenv keeps its `Parse()` function as public API so you can use that.
 
 ```go
 // import "strings"
@@ -92,4 +85,4 @@ Parse ignores invalid lines and returns `Env` of valid environment variables.
 
 ## Notes
 
-The gotenv package is a Go port of [`dotenv`](https://github.com/bkeepers/dotenv) project. Most logic and regexp pattern is taken from there and aims will be compatible as close as possible.
+The gotenv package is a Go port of [`dotenv`](https://github.com/bkeepers/dotenv) project. It aims to be compatible as close as possible.
