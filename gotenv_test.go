@@ -131,13 +131,13 @@ var formats = []struct {
 var errorFormats = []struct {
 	in  string
 	out Env
-	err error
+	err string
 }{
 	// allows export line if you want to do it that way and checks for unset variables
-	{"OPTION_A=2\nexport OH_NO_NOT_SET", Env{"OPTION_A": "2"}, ErrFormat{Message: "Line `export OH_NO_NOT_SET` has an unset variable"}},
+	{"OPTION_A=2\nexport OH_NO_NOT_SET", Env{"OPTION_A": "2"}, "Line `export OH_NO_NOT_SET` has an unset variable"},
 
 	// throws an error if line format is incorrect
-	{`lol$wut`, Env{}, ErrFormat{Message: "Line `lol$wut` doesn't match format"}},
+	{`lol$wut`, Env{}, "Line `lol$wut` doesn't match format"},
 }
 
 var fixtures = []struct {
@@ -200,7 +200,7 @@ func TestParse(t *testing.T) {
 func TestStrictParse(t *testing.T) {
 	for _, tt := range errorFormats {
 		env, err := StrictParse(strings.NewReader(tt.in))
-		assert.Equal(t, tt.err, err)
+		assert.Equal(t, tt.err, err.Error())
 		assert.Equal(t, tt.out, env)
 	}
 }
