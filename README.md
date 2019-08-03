@@ -1,6 +1,7 @@
 # gotenv
 
 [![Build Status](https://travis-ci.org/subosito/gotenv.svg?branch=master)](https://travis-ci.org/subosito/gotenv)
+[![Build status](https://ci.appveyor.com/api/projects/status/wb2e075xkfl0m0v2/branch/master?svg=true)](https://ci.appveyor.com/project/subosito/gotenv/branch/master)
 [![Coverage Status](https://badgen.net/codecov/c/github/subosito/gotenv)](https://codecov.io/gh/subosito/gotenv)
 [![Go Report Card](https://goreportcard.com/badge/github.com/subosito/gotenv)](https://goreportcard.com/report/github.com/subosito/gotenv)
 [![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.svg)](https://godoc.org/github.com/subosito/gotenv)
