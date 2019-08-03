@@ -165,23 +165,7 @@ func parseLine(s string, env Env) error {
 	rm := rl.FindStringSubmatch(s)
 
 	if len(rm) == 0 {
-		st := strings.TrimSpace(s)
-
-		if (st == "") || strings.HasPrefix(st, "#") {
-			return nil
-		}
-
-		if strings.HasPrefix(st, "export") {
-			vs := strings.SplitN(st, " ", 2)
-
-			if len(vs) > 1 {
-				if _, ok := env[vs[1]]; !ok {
-					return ErrFormat{Message: fmt.Sprintf("Line `%s` has an unset variable", st)}
-				}
-			}
-		}
-
-		return ErrFormat{Message: fmt.Sprintf("Line `%s` doesn't match format", s)}
+		return checkFormat(s, env)
 	}
 
 	key := rm[1]
@@ -211,34 +195,72 @@ func parseLine(s string, env Env) error {
 
 	rv := regexp.MustCompile(variablePattern)
 	fv := func(s string) string {
-		if strings.HasPrefix(s, "\\") {
-			return strings.TrimPrefix(s, "\\")
-		}
-
-		if hsq {
-			return s
-		}
-
-		sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
-		rn := regexp.MustCompile(sn)
-		mn := rn.FindStringSubmatch(s)
-
-		if len(mn) == 0 {
-			return s
-		}
-
-		v := mn[3]
-
-		replace, ok := env[v]
-		if !ok {
-			replace = os.Getenv(v)
-		}
-
-		return replace
+		return varReplacement(s, hsq, env)
 	}
 
 	val = rv.ReplaceAllStringFunc(val, fv)
+	val = parseVal(val, env)
 
+	env[key] = val
+	return nil
+}
+
+func parseExport(st string, env Env) error {
+	if strings.HasPrefix(st, "export") {
+		vs := strings.SplitN(st, " ", 2)
+
+		if len(vs) > 1 {
+			if _, ok := env[vs[1]]; !ok {
+				return ErrFormat{Message: fmt.Sprintf("Line `%s` has an unset variable", st)}
+			}
+		}
+	}
+
+	return nil
+}
+
+func varReplacement(s string, hsq bool, env Env) string {
+	if strings.HasPrefix(s, "\\") {
+		return strings.TrimPrefix(s, "\\")
+	}
+
+	if hsq {
+		return s
+	}
+
+	sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
+	rn := regexp.MustCompile(sn)
+	mn := rn.FindStringSubmatch(s)
+
+	if len(mn) == 0 {
+		return s
+	}
+
+	v := mn[3]
+
+	replace, ok := env[v]
+	if !ok {
+		replace = os.Getenv(v)
+	}
+
+	return replace
+}
+
+func checkFormat(s string, env Env) error {
+	st := strings.TrimSpace(s)
+
+	if (st == "") || strings.HasPrefix(st, "#") {
+		return nil
+	}
+
+	if err := parseExport(st, env); err != nil {
+		return err
+	}
+
+	return ErrFormat{Message: fmt.Sprintf("Line `%s` doesn't match format", s)}
+}
+
+func parseVal(val string, env Env) string {
 	if strings.Contains(val, "=") {
 		if !(val == "\n" || val == "\r") {
 			kv := strings.Split(val, "\n")
@@ -257,6 +279,5 @@ func parseLine(s string, env Env) error {
 		}
 	}
 
-	env[key] = val
-	return nil
+	return val
 }
