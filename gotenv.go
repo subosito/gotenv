@@ -18,12 +18,12 @@ const (
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
 )
 
-// ErrFormat is an error for invalid line format
-type ErrFormat struct {
+// Error is an error for invalid line format
+type Error struct {
 	Message string
 }
 
-func (e ErrFormat) Error() string {
+func (e Error) Error() string {
 	return e.Message
 }
 
@@ -200,7 +200,7 @@ func parseExport(st string, env Env) error {
 
 		if len(vs) > 1 {
 			if _, ok := env[vs[1]]; !ok {
-				return ErrFormat{Message: fmt.Sprintf("Line `%s` has an unset variable", st)}
+				return Error{Message: fmt.Sprintf("Line `%s` has an unset variable", st)}
 			}
 		}
 	}
@@ -246,7 +246,7 @@ func checkFormat(s string, env Env) error {
 		return err
 	}
 
-	return ErrFormat{Message: fmt.Sprintf("Line `%s` doesn't match format", s)}
+	return Error{Message: fmt.Sprintf("Line `%s` doesn't match format", s)}
 }
 
 func parseVal(val string, env Env) string {
