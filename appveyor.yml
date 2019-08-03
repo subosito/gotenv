@@ -1,5 +1,5 @@
 build: off
-clone_folder: c:\gopath\src\github.com\$username\$project
+clone_folder: c:\gopath\src\github.com\subosito\gotenv
 environment:
   GOPATH: c:\gopath
 stack: go 1.10
