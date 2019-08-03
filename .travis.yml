@@ -1,8 +1,9 @@
 language: go
 go:
-  - 1.6.3
-  - 1.5.4
-  - tip
+  - 1.x
+os:
+  - linux
+  - osx
 script:
   - go test -test.v -coverprofile=coverage.out -covermode=count
 after_success:
