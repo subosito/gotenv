@@ -8,12 +8,6 @@
 
 Load environment variables dynamically in Go.
 
-## Installation
-
-```bash
-$ go get github.com/subosito/gotenv
-```
-
 ## Usage
 
 Put the gotenv package on your `import` statement:
@@ -22,13 +16,14 @@ Put the gotenv package on your `import` statement:
 import "github.com/subosito/gotenv"
 ```
 
-By default, `Load` will look for a file called `.env` in the current working directory.
+To modify your app environment variables, `gotenv` expose 2 main functions:
 
-```go
-gotenv.Load()
-```
+- `gotenv.Load`
+- `gotenv.Apply`
 
-Behind the scene it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure it loads all variables, say, put it on `init()` function.
+By default, `gotenv.Load` will look for a file called `.env` in the current working directory.
+
+Behind the scene, it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure it loads all variables, say, put it on `init()` function.
 
 Once loaded you can use `os.Getenv()` to get the value of the variable.
 
@@ -66,11 +61,58 @@ You can also load other than `.env` file if you wish. Just supply filenames when
 gotenv.Load(".env.production", "credentials")
 ```
 
-That's it :)
+While `gotenv.Load` loads entries from `.env` file, `gotenv.Apply` allows you to use any `io.Reader`:
+
+```go
+gotenv.Apply(strings.NewReader("APP_ID=1234567"))
+
+log.Println(os.Getenv("APP_ID"))
+// Output: "1234567"
+```
+
+Both `gotenv.Load` and `gotenv.Apply` **DO NOT** overrides existing environment variables. If you want to override existing ones, you can see section below.
+
+### Environment Overrides
+
+Besides above functions, `gotenv` also provides another functions that overrides existing:
+
+- `gotenv.OverLoad`
+- `gotenv.OverApply`
+
+
+Here's the example of this overrides behavior:
+
+```go
+os.Setenv("HELLO", "world")
+
+// NOTE: using Apply existing value will be reserved
+gotenv.Apply(strings.NewReader("HELLO=universe"))
+fmt.Println(os.Getenv("HELLO"))
+// Output: "world"
+
+// NOTE: using OverApply existing value will be overridden
+gotenv.OverApply(strings.NewReader("HELLO=universe"))
+fmt.Println(os.Getenv("HELLO"))
+// Output: "universe"
+```
+
+### Throw a Panic
+
+Both `gotenv.Load` and `gotenv.OverLoad` returns an error on something wrong occurred, like your env file is not exist, and so on. To make it easier to use, `gotenv` also provides `gotenv.Must` helper, to let it panic when an error returned.
+
+```go
+err := gotenv.Load(".env-is-not-exist")
+fmt.Println("error", err)
+// error: open .env-is-not-exist: no such file or directory
+
+gotenv.Must(gotenv.Load, ".env-is-not-exist")
+// it will throw a panic
+// panic: open .env-is-not-exist: no such file or directory
+```
 
 ### Another Scenario
 
-Just in case you want to parse environment variables from any `io.Reader`, gotenv keeps its `Parse()` function as public API so you can use that.
+Just in case you want to parse environment variables from any `io.Reader`, gotenv keeps its `Parse` and `StrictParse` function as public API so you can use that.
 
 ```go
 // import "strings"
@@ -78,12 +120,12 @@ Just in case you want to parse environment variables from any `io.Reader`, goten
 pairs := gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
 // gotenv.Env{"FOO": "test", "BAR": "test"}
 
-pairs = gotenv.Parse(strings.NewReader(`FOO="bar"`))
+err, pairs = gotenv.StrictParse(strings.NewReader(`FOO="bar"`))
 // gotenv.Env{"FOO": "bar"}
 ```
 
-Parse ignores invalid lines and returns `Env` of valid environment variables.
+`Parse` ignores invalid lines and returns `Env` of valid environment variables, while `StrictParse` returns an error for invalid lines.
 
 ## Notes
 
-The gotenv package is a Go port of [`dotenv`](https://github.com/bkeepers/dotenv) project. It aims to be compatible as close as possible.
+The gotenv package is a Go port of [`dotenv`](https://github.com/bkeepers/dotenv) project with some additions made for Go. For general features, it aims to be compatible as close as possible.
