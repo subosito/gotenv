@@ -22,7 +22,7 @@ const (
 type Env map[string]string
 
 /*
-Load is function to load a file or multiple files and then export the valid variables into environment variables if they are not exists.
+Load is a function to load a file or multiple files and then export the valid variables into environment variables if they do not exist.
 When it's called with no argument, it will load `.env` file on the current path and set the environment variables.
 Otherwise, it will loop over the filenames parameter and set the proper environment variables.
 */
@@ -31,14 +31,14 @@ func Load(filenames ...string) error {
 }
 
 /*
-OverLoad is function to load a file or multiple files and then export and override the valid variables into environment variables.
+OverLoad is a function to load a file or multiple files and then export and override the valid variables into environment variables.
 */
 func OverLoad(filenames ...string) error {
 	return loadenv(true, filenames...)
 }
 
 /*
-Must is wrapper function that will panic when supplied function returns error
+Must is wrapper function that will panic when supplied function returns an error.
 */
 func Must(fn func(filenames ...string) error, filenames ...string) {
 	if err := fn(filenames...); err != nil {
@@ -47,14 +47,14 @@ func Must(fn func(filenames ...string) error, filenames ...string) {
 }
 
 /*
-Apply is function to load an io Reader then export the valid variables into environment variables if they are not exist.
+Apply is a function to load an io Reader then export the valid variables into environment variables if they do not exist.
 */
 func Apply(r io.Reader) error {
 	return parset(r, false)
 }
 
 /*
-OverApply is function to load an io Reader then export and override the valid variables into environment variables.
+OverApply is a function to load an io Reader then export and override the valid variables into environment variables.
 */
 func OverApply(r io.Reader) error {
 	return parset(r, true)
@@ -107,7 +107,7 @@ func setenv(key, val string, override bool) {
 }
 
 // Parse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
-// It expands the value of a variable from environment variable, but does not set the value to the environment itself.
+// It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is skipping any invalid lines and only processing the valid one.
 func Parse(r io.Reader) Env {
 	env, _ := StrictParse(r)
@@ -115,8 +115,8 @@ func Parse(r io.Reader) Env {
 }
 
 // StrictParse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
-// It expands the value of a variable from environment variable, but does not set the value to the environment itself.
-// This function is returning an error if there is any invalid lines.
+// It expands the value of a variable from the environment variable but does not set the value to the environment itself.
+// This function is returning an error if there are any invalid lines.
 func StrictParse(r io.Reader) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
