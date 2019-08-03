@@ -281,34 +281,34 @@ func TestLoad_unicodeBOM(t *testing.T) {
 	os.Clearenv()
 }
 
-func TestMustLoad(t *testing.T) {
+func TestMust_Load(t *testing.T) {
 	for _, tt := range fixtures {
 		assert.NotPanics(t, func() {
-			MustLoad(tt.filename)
+			Must(Load, tt.filename)
 
 			for key, val := range tt.results {
 				assert.Equal(t, val, os.Getenv(key))
 			}
 
 			os.Clearenv()
-		}, "Caling MustLoad should NOT panic")
+		}, "Caling Must with Load should NOT panic")
 	}
 }
 
-func TestMustLoad_default(t *testing.T) {
+func TestMust_Load_default(t *testing.T) {
 	assert.NotPanics(t, func() {
-		MustLoad()
+		Must(Load)
 
 		tkey := "HELLO"
 		val := "world"
 
 		assert.Equal(t, val, os.Getenv(tkey))
 		os.Clearenv()
-	}, "Caling Load with no arguments should NOT panic")
+	}, "Caling Must with Load without arguments should NOT panic")
 }
 
-func TestMustLoad_nonExist(t *testing.T) {
-	assert.Panics(t, func() { MustLoad(".env.not.exist") }, "Caling MustLoad with non exist file SHOULD panic")
+func TestMust_Load_nonExist(t *testing.T) {
+	assert.Panics(t, func() { Must(Load, ".env.not.exist") }, "Caling Must with Load and non exist file SHOULD panic")
 }
 
 func TestOverLoad_overriding(t *testing.T) {
@@ -323,7 +323,7 @@ func TestOverLoad_overriding(t *testing.T) {
 }
 
 func TestMustOverLoad_nonExist(t *testing.T) {
-	assert.Panics(t, func() { MustOverLoad(".env.not.exist") }, "Caling MustOverLoad with non exist file SHOULD panic")
+	assert.Panics(t, func() { Must(OverLoad, ".env.not.exist") }, "Caling Must with OverLoad and non exist file SHOULD panic")
 }
 
 func TestApply(t *testing.T) {

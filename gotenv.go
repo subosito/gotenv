@@ -40,16 +40,6 @@ func Load(filenames ...string) error {
 }
 
 /*
-MustLoad is similar function like Load but will panic when supplied files are not exist.
-*/
-func MustLoad(filenames ...string) {
-	err := Load(filenames...)
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-/*
 OverLoad is function to load a file or multiple files and then export and override the valid variables into environment variables.
 */
 func OverLoad(filenames ...string) error {
@@ -57,11 +47,10 @@ func OverLoad(filenames ...string) error {
 }
 
 /*
-MustOverLoad is similar function like OverLoad but will panic when supplied files are not exist.
+Must is wrapper function that will panic when supplied function returns error
 */
-func MustOverLoad(filenames ...string) {
-	err := OverLoad(filenames...)
-	if err != nil {
+func Must(fn func(filenames ...string) error, filenames ...string) {
+	if err := fn(filenames...); err != nil {
 		panic(err.Error())
 	}
 }
