@@ -6,7 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/subosito/gotenv)](https://goreportcard.com/report/github.com/subosito/gotenv)
 [![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.svg)](https://godoc.org/github.com/subosito/gotenv)
 
-Load environment variables dynamically in Go.
+Load environment variables from `.env` or `io.Reader` in Go.
 
 ## Usage
 
