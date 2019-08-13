@@ -2,8 +2,11 @@ name: Go
 on: [push]
 jobs:
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Go 1.12
         uses: actions/setup-go@v1
