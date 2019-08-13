@@ -16,4 +16,6 @@ jobs:
       - name: Run test
         run: go test -test.v -coverprofile=coverage.out -covermode=count
       - name: Publish coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: bash <(curl -s https://codecov.io/bash)
