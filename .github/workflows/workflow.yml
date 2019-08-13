@@ -9,16 +9,11 @@ jobs:
         uses: actions/setup-go@v1
         with:
           version: 1.12
-        id: go
       - name: Checkout source code
         uses: actions/checkout@master
-        path: ${{ go.module-path }}
       - name: Get dependencies
-        working-directory: ${{ go.module-path }}
         run: go get -t -v
       - name: Run test
-        working-directory: ${{ go.module-path }}
         run: go test -test.v -coverprofile=coverage.out -covermode=count
       - name: Publish coverage
-        working-directory: ${{ go.module-path }}
         run: bash <(curl -s https://codecov.io/bash)
