@@ -9,7 +9,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Go 1.12
-        uses: actions/setup-go@v1
+        uses: subosito/setup-go@golang-dl
         with:
           version: 1.12
       - name: Checkout source code
