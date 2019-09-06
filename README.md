@@ -1,6 +1,6 @@
 # gotenv
 
-[![Build Status](https://github.com/subosito/gotenv/workflows/build/badge.svg)](https://github.com/subosito/gotenv/actions)
+[![Build Status](https://github.com/subosito/gotenv/workflows/Go%20workflow/badge.svg)](https://github.com/subosito/gotenv/actions)
 [![Coverage Status](https://badgen.net/codecov/c/github/subosito/gotenv)](https://codecov.io/gh/subosito/gotenv)
 [![Go Report Card](https://goreportcard.com/badge/github.com/subosito/gotenv)](https://goreportcard.com/report/github.com/subosito/gotenv)
 [![GoDoc](https://godoc.org/github.com/subosito/gotenv?status.svg)](https://godoc.org/github.com/subosito/gotenv)
