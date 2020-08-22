@@ -119,7 +119,7 @@ Just in case you want to parse environment variables from any `io.Reader`, goten
 pairs := gotenv.Parse(strings.NewReader("FOO=test\nBAR=$FOO"))
 // gotenv.Env{"FOO": "test", "BAR": "test"}
 
-err, pairs = gotenv.StrictParse(strings.NewReader(`FOO="bar"`))
+pairs, err := gotenv.StrictParse(strings.NewReader(`FOO="bar"`))
 // gotenv.Env{"FOO": "bar"}
 ```
 
