@@ -127,6 +127,9 @@ var formats = []struct {
 
 	// allows # in quoted value with spaces after separator
 	{`foo= "bar#baz" # comment`, gotenv.Env{"foo": "bar#baz"}, false},
+
+	// allows = in double quoted values with newlines (typically base64 padding)
+	{`foo="---\na==\n---"`, gotenv.Env{"foo": "---\na==\n---"}, false},
 }
 
 var errorFormats = []struct {
