@@ -18,6 +18,10 @@ jobs:
       - name: Get dependencies
         run: go get -t -v
       - name: Run test
+        if: matrix.os == 'windows-latest'
+        run: go test -v
+      - name: Run test coverage
+        if: matrix.os != 'windows-latest'
         run: go test -v -coverprofile=coverage.out -covermode=count
       - name: Publish coverage
         if: matrix.os != 'windows-latest'
