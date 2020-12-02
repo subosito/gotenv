@@ -181,7 +181,7 @@ func parseLine(s string, env Env) error {
 	}
 
 	val = rv.ReplaceAllStringFunc(val, fv)
-	val = parseVal(val, env)
+	val = parseVal(val, env, hdq)
 
 	env[key] = val
 	return nil
@@ -242,21 +242,15 @@ func checkFormat(s string, env Env) error {
 	return fmt.Errorf("line `%s` doesn't match format", s)
 }
 
-func parseVal(val string, env Env) string {
-	if strings.Contains(val, "=") {
-		if !(val == "\n" || val == "\r") {
-			kv := strings.Split(val, "\n")
+func parseVal(val string, env Env, ignoreNewlines bool) string {
+	if strings.Contains(val, "=") && !ignoreNewlines {
+		kv := strings.Split(val, "\r")
 
-			if len(kv) == 1 {
-				kv = strings.Split(val, "\r")
-			}
+		if len(kv) > 1 {
+			val = kv[0]
 
-			if len(kv) > 1 {
-				val = kv[0]
-
-				for i := 1; i < len(kv); i++ {
-					parseLine(kv[i], env)
-				}
+			for i := 1; i < len(kv); i++ {
+				parseLine(kv[i], env)
 			}
 		}
 	}
