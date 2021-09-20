@@ -243,6 +243,22 @@ func TestLoad_overriding(t *testing.T) {
 	os.Clearenv()
 }
 
+func TestLoad_overrideVars(t *testing.T) {
+	os.Setenv("A", "fromEnv")
+	err := gotenv.Load("fixtures/vars.env")
+	assert.Nil(t, err)
+	assert.Equal(t, "fromEnv", os.Getenv("B"))
+	os.Clearenv()
+}
+
+func TestLoad_overrideVars2(t *testing.T) {
+	os.Setenv("C", "fromEnv")
+	err := gotenv.Load("fixtures/vars.env")
+	assert.Nil(t, err)
+	assert.Equal(t, "fromEnv", os.Getenv("D"))
+	os.Clearenv()
+}
+
 func TestLoad_Env(t *testing.T) {
 	err := gotenv.Load(".env.invalid")
 	assert.NotNil(t, err)
