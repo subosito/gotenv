@@ -220,6 +220,10 @@ func varReplacement(s string, hsq bool, env Env) string {
 
 	v := mn[3]
 
+	if replace, ok := os.LookupEnv(v); ok {
+		return replace
+	}
+
 	replace, ok := env[v]
 	if !ok {
 		replace = os.Getenv(v)
