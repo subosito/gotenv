@@ -16,6 +16,9 @@ const (
 
 	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
+
+	// Byte order mark character
+	bom = "\xef\xbb\xbf"
 )
 
 // Env holds key/value pair of valid environment variable
@@ -125,17 +128,15 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
-	i := 1
-	bom := string([]byte{239, 187, 191})
+	firstLine := true
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if i == 1 {
+		if firstLine {
 			line = strings.TrimPrefix(line, bom)
+			firstLine = false
 		}
-
-		i++
 
 		err := parseLine(line, env, override)
 		if err != nil {
@@ -170,8 +171,8 @@ func parseLine(s string, env Env, override bool) error {
 	val = rq.ReplaceAllString(val, "$2")
 
 	if hdq {
-		val = strings.Replace(val, `\n`, "\n", -1)
-		val = strings.Replace(val, `\r`, "\r", -1)
+		val = strings.ReplaceAll(val, `\n`, "\n")
+		val = strings.ReplaceAll(val, `\r`, "\r")
 
 		// Unescape all characters except $ so variables can be escaped properly
 		re := regexp.MustCompile(`\\([^$])`)
@@ -255,9 +256,8 @@ func parseVal(val string, env Env, ignoreNewlines bool, override bool) string {
 
 		if len(kv) > 1 {
 			val = kv[0]
-
-			for i := 1; i < len(kv); i++ {
-				parseLine(kv[i], env, override)
+			for _, l := range kv[1:] {
+				_ = parseLine(l, env, override)
 			}
 		}
 	}
