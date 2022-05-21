@@ -131,11 +131,46 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 	firstLine := true
 
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
 
 		if firstLine {
 			line = strings.TrimPrefix(line, bom)
 			firstLine = false
+		}
+
+		if line == "" || line[0] == '#' {
+			continue
+		}
+
+		quote := ""
+		idx := strings.Index(line, "=")
+		if idx == -1 {
+			idx = strings.Index(line, ":")
+		}
+		if idx > 0 && idx < len(line)-1 {
+			val := strings.TrimSpace(line[idx+1:])
+			if val[0] == '"' || val[0] == '\'' {
+				quote = val[:1]
+				idx = strings.LastIndex(strings.TrimSpace(val[1:]), quote)
+				if idx >= 0 && val[idx] != '\\' {
+					quote = ""
+				}
+			}
+		}
+		for quote != "" && scanner.Scan() {
+			l := scanner.Text()
+			line += "\n" + l
+			idx := strings.LastIndex(l, quote)
+			if idx > 0 && l[idx-1] == '\\' {
+				continue
+			}
+			if idx >= 0 {
+				quote = ""
+			}
+		}
+
+		if quote != "" {
+			return env, fmt.Errorf("missing quotes")
 		}
 
 		err := parseLine(line, env, override)
@@ -149,7 +184,6 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 
 var (
 	lineRgx     = regexp.MustCompile(linePattern)
-	quotesRgx   = regexp.MustCompile(`\A(['"])(.*)(['"])\z`)
 	unescapeRgx = regexp.MustCompile(`\\([^$])`)
 	varRgx      = regexp.MustCompile(variablePattern)
 )
@@ -174,7 +208,7 @@ func parseLine(s string, env Env, override bool) error {
 	val = strings.Trim(val, " ")
 
 	// remove quotes '' or ""
-	val = quotesRgx.ReplaceAllString(val, "$2")
+	val = strings.Trim(val, `'"`)
 
 	if hdq {
 		val = strings.ReplaceAll(val, `\n`, "\n")
