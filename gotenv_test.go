@@ -199,6 +199,7 @@ THE SOFTWARE.`,
 			"OPTION_H": "\n",
 			"OPTION_I": `some multi-line text
 with "escaped quotes" and 1 variable`,
+			"OPTION_J": `some$pecial$1$2!*chars=qweq""e$$\$""`,
 		},
 	},
 	{

@@ -198,17 +198,19 @@ func parseLine(s string, env Env, override bool) error {
 	key := rm[1]
 	val := rm[2]
 
+	// trim whitespace
+	val = strings.TrimSpace(val)
+
 	// determine if string has quote prefix
 	hdq := strings.HasPrefix(val, `"`)
 
 	// determine if string has single quote prefix
 	hsq := strings.HasPrefix(val, `'`)
 
-	// trim whitespace
-	val = strings.Trim(val, " ")
-
 	// remove quotes '' or ""
-	val = strings.Trim(val, `'"`)
+	if l := len(val); (hsq || hdq) && l >= 2 {
+		val = val[1 : l-1]
+	}
 
 	if hdq {
 		val = strings.ReplaceAll(val, `\n`, "\n")
@@ -222,8 +224,10 @@ func parseLine(s string, env Env, override bool) error {
 		return varReplacement(s, hsq, env, override)
 	}
 
-	val = varRgx.ReplaceAllStringFunc(val, fv)
-	val = parseVal(val, env, hdq, override)
+	if !hsq {
+		val = varRgx.ReplaceAllStringFunc(val, fv)
+		val = parseVal(val, env, hdq, override)
+	}
 
 	env[key] = val
 	return nil
