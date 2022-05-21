@@ -146,9 +146,16 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 
 	return env, nil
 }
+
+var (
+	lineRgx     = regexp.MustCompile(linePattern)
+	quotesRgx   = regexp.MustCompile(`\A(['"])(.*)(['"])\z`)
+	unescapeRgx = regexp.MustCompile(`\\([^$])`)
+	varRgx      = regexp.MustCompile(variablePattern)
+)
+
 func parseLine(s string, env Env, override bool) error {
-	rl := regexp.MustCompile(linePattern)
-	rm := rl.FindStringSubmatch(s)
+	rm := lineRgx.FindStringSubmatch(s)
 
 	if len(rm) == 0 {
 		return checkFormat(s, env)
@@ -167,24 +174,21 @@ func parseLine(s string, env Env, override bool) error {
 	val = strings.Trim(val, " ")
 
 	// remove quotes '' or ""
-	rq := regexp.MustCompile(`\A(['"])(.*)(['"])\z`)
-	val = rq.ReplaceAllString(val, "$2")
+	val = quotesRgx.ReplaceAllString(val, "$2")
 
 	if hdq {
 		val = strings.ReplaceAll(val, `\n`, "\n")
 		val = strings.ReplaceAll(val, `\r`, "\r")
 
 		// Unescape all characters except $ so variables can be escaped properly
-		re := regexp.MustCompile(`\\([^$])`)
-		val = re.ReplaceAllString(val, "$1")
+		val = unescapeRgx.ReplaceAllString(val, "$1")
 	}
 
-	rv := regexp.MustCompile(variablePattern)
 	fv := func(s string) string {
 		return varReplacement(s, hsq, env, override)
 	}
 
-	val = rv.ReplaceAllStringFunc(val, fv)
+	val = varRgx.ReplaceAllStringFunc(val, fv)
 	val = parseVal(val, env, hdq, override)
 
 	env[key] = val
@@ -205,6 +209,8 @@ func parseExport(st string, env Env) error {
 	return nil
 }
 
+var varNameRgx = regexp.MustCompile(`(\$)(\{?([A-Z0-9_]+)\}?)`)
+
 func varReplacement(s string, hsq bool, env Env, override bool) string {
 	if strings.HasPrefix(s, "\\") {
 		return strings.TrimPrefix(s, "\\")
@@ -214,9 +220,7 @@ func varReplacement(s string, hsq bool, env Env, override bool) string {
 		return s
 	}
 
-	sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
-	rn := regexp.MustCompile(sn)
-	mn := rn.FindStringSubmatch(s)
+	mn := varNameRgx.FindStringSubmatch(s)
 
 	if len(mn) == 0 {
 		return s
