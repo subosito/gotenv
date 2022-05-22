@@ -68,11 +68,10 @@ func loadenv(override bool, filenames ...string) error {
 		}
 
 		err = parset(f, override)
+		f.Close()
 		if err != nil {
 			return err
 		}
-
-		f.Close()
 	}
 
 	return nil
