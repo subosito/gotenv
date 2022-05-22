@@ -116,6 +116,17 @@ func StrictParse(r io.Reader) (Env, error) {
 	return strictParse(r, false)
 }
 
+// Read is a function to parse a file line by line and returns the valid Env key/value pair of valid variables.
+// It expands the value of a variable from the environment variable but does not set the value to the environment itself.
+// This function is skipping any invalid lines and only processing the valid one.
+func Read(filename string) (Env, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	return strictParse(f, false)
+}
+
 //Unmarshal reads a string line by line and returns the valid Env key/value pair of valid variables.
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is returning an error if there are any invalid lines.
