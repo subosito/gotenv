@@ -16,6 +16,9 @@ const (
 
 	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
+
+	// Byte order mark character
+	bom = "\xef\xbb\xbf"
 )
 
 // Env holds key/value pair of valid environment variable
@@ -125,17 +128,50 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
-	i := 1
-	bom := string([]byte{239, 187, 191})
+	firstLine := true
 
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
 
-		if i == 1 {
+		if firstLine {
 			line = strings.TrimPrefix(line, bom)
+			firstLine = false
 		}
 
-		i++
+		if line == "" || line[0] == '#' {
+			continue
+		}
+
+		quote := ""
+		idx := strings.Index(line, "=")
+		if idx == -1 {
+			idx = strings.Index(line, ":")
+		}
+		if idx > 0 && idx < len(line)-1 {
+			val := strings.TrimSpace(line[idx+1:])
+			if val[0] == '"' || val[0] == '\'' {
+				quote = val[:1]
+				idx = strings.LastIndex(strings.TrimSpace(val[1:]), quote)
+				if idx >= 0 && val[idx] != '\\' {
+					quote = ""
+				}
+			}
+		}
+		for quote != "" && scanner.Scan() {
+			l := scanner.Text()
+			line += "\n" + l
+			idx := strings.LastIndex(l, quote)
+			if idx > 0 && l[idx-1] == '\\' {
+				continue
+			}
+			if idx >= 0 {
+				quote = ""
+			}
+		}
+
+		if quote != "" {
+			return env, fmt.Errorf("missing quotes")
+		}
 
 		err := parseLine(line, env, override)
 		if err != nil {
@@ -145,9 +181,15 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 
 	return env, nil
 }
+
+var (
+	lineRgx     = regexp.MustCompile(linePattern)
+	unescapeRgx = regexp.MustCompile(`\\([^$])`)
+	varRgx      = regexp.MustCompile(variablePattern)
+)
+
 func parseLine(s string, env Env, override bool) error {
-	rl := regexp.MustCompile(linePattern)
-	rm := rl.FindStringSubmatch(s)
+	rm := lineRgx.FindStringSubmatch(s)
 
 	if len(rm) == 0 {
 		return checkFormat(s, env)
@@ -156,35 +198,36 @@ func parseLine(s string, env Env, override bool) error {
 	key := rm[1]
 	val := rm[2]
 
+	// trim whitespace
+	val = strings.TrimSpace(val)
+
 	// determine if string has quote prefix
 	hdq := strings.HasPrefix(val, `"`)
 
 	// determine if string has single quote prefix
 	hsq := strings.HasPrefix(val, `'`)
 
-	// trim whitespace
-	val = strings.Trim(val, " ")
-
 	// remove quotes '' or ""
-	rq := regexp.MustCompile(`\A(['"])(.*)(['"])\z`)
-	val = rq.ReplaceAllString(val, "$2")
-
-	if hdq {
-		val = strings.Replace(val, `\n`, "\n", -1)
-		val = strings.Replace(val, `\r`, "\r", -1)
-
-		// Unescape all characters except $ so variables can be escaped properly
-		re := regexp.MustCompile(`\\([^$])`)
-		val = re.ReplaceAllString(val, "$1")
+	if l := len(val); (hsq || hdq) && l >= 2 {
+		val = val[1 : l-1]
 	}
 
-	rv := regexp.MustCompile(variablePattern)
+	if hdq {
+		val = strings.ReplaceAll(val, `\n`, "\n")
+		val = strings.ReplaceAll(val, `\r`, "\r")
+
+		// Unescape all characters except $ so variables can be escaped properly
+		val = unescapeRgx.ReplaceAllString(val, "$1")
+	}
+
 	fv := func(s string) string {
 		return varReplacement(s, hsq, env, override)
 	}
 
-	val = rv.ReplaceAllStringFunc(val, fv)
-	val = parseVal(val, env, hdq, override)
+	if !hsq {
+		val = varRgx.ReplaceAllStringFunc(val, fv)
+		val = parseVal(val, env, hdq, override)
+	}
 
 	env[key] = val
 	return nil
@@ -204,6 +247,8 @@ func parseExport(st string, env Env) error {
 	return nil
 }
 
+var varNameRgx = regexp.MustCompile(`(\$)(\{?([A-Z0-9_]+)\}?)`)
+
 func varReplacement(s string, hsq bool, env Env, override bool) string {
 	if strings.HasPrefix(s, "\\") {
 		return strings.TrimPrefix(s, "\\")
@@ -213,9 +258,7 @@ func varReplacement(s string, hsq bool, env Env, override bool) string {
 		return s
 	}
 
-	sn := `(\$)(\{?([A-Z0-9_]+)\}?)`
-	rn := regexp.MustCompile(sn)
-	mn := rn.FindStringSubmatch(s)
+	mn := varNameRgx.FindStringSubmatch(s)
 
 	if len(mn) == 0 {
 		return s
@@ -255,9 +298,8 @@ func parseVal(val string, env Env, ignoreNewlines bool, override bool) string {
 
 		if len(kv) > 1 {
 			val = kv[0]
-
-			for i := 1; i < len(kv); i++ {
-				parseLine(kv[i], env, override)
+			for _, l := range kv[1:] {
+				_ = parseLine(l, env, override)
 			}
 		}
 	}
