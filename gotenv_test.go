@@ -342,6 +342,24 @@ func TestOverLoad_overriding(t *testing.T) {
 	os.Clearenv()
 }
 
+func TestOverLoad_overrideVars(t *testing.T) {
+	os.Setenv("A", "fromEnv")
+	err := gotenv.OverLoad("fixtures/vars.env")
+	assert.Nil(t, err)
+	assert.Equal(t, "fromFile", os.Getenv("B"))
+	os.Clearenv()
+}
+
+func TestOverLoad_overrideVars2(t *testing.T) {
+	os.Setenv("C", "fromEnv")
+	err := gotenv.OverLoad("fixtures/vars.env")
+	assert.Nil(t, err)
+	// The value for D is not "fromFile" because C is defined after the
+	// definition of D.
+	assert.Equal(t, "fromEnv", os.Getenv("D"), "C defined after usage")
+	os.Clearenv()
+}
+
 func TestMustOverLoad_nonExist(t *testing.T) {
 	assert.Panics(t, func() { gotenv.Must(gotenv.OverLoad, ".env.not.exist") }, "Caling gotenv.Must with Overgotenv.Load and non exist file SHOULD panic")
 }

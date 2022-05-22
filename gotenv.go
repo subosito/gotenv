@@ -84,7 +84,7 @@ func loadenv(override bool, filenames ...string) error {
 
 // parse and set :)
 func parset(r io.Reader, override bool) error {
-	env, err := StrictParse(r)
+	env, err := strictParse(r, override)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func setenv(key, val string, override bool) {
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is skipping any invalid lines and only processing the valid one.
 func Parse(r io.Reader) Env {
-	env, _ := StrictParse(r)
+	env, _ := strictParse(r, false)
 	return env
 }
 
@@ -118,6 +118,10 @@ func Parse(r io.Reader) Env {
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is returning an error if there are any invalid lines.
 func StrictParse(r io.Reader) (Env, error) {
+	return strictParse(r, false)
+}
+
+func strictParse(r io.Reader, override bool) (Env, error) {
 	env := make(Env)
 	scanner := bufio.NewScanner(r)
 
@@ -133,7 +137,7 @@ func StrictParse(r io.Reader) (Env, error) {
 
 		i++
 
-		err := parseLine(line, env)
+		err := parseLine(line, env, override)
 		if err != nil {
 			return env, err
 		}
@@ -141,8 +145,7 @@ func StrictParse(r io.Reader) (Env, error) {
 
 	return env, nil
 }
-
-func parseLine(s string, env Env) error {
+func parseLine(s string, env Env, override bool) error {
 	rl := regexp.MustCompile(linePattern)
 	rm := rl.FindStringSubmatch(s)
 
@@ -177,11 +180,11 @@ func parseLine(s string, env Env) error {
 
 	rv := regexp.MustCompile(variablePattern)
 	fv := func(s string) string {
-		return varReplacement(s, hsq, env)
+		return varReplacement(s, hsq, env, override)
 	}
 
 	val = rv.ReplaceAllStringFunc(val, fv)
-	val = parseVal(val, env, hdq)
+	val = parseVal(val, env, hdq, override)
 
 	env[key] = val
 	return nil
@@ -201,7 +204,7 @@ func parseExport(st string, env Env) error {
 	return nil
 }
 
-func varReplacement(s string, hsq bool, env Env) string {
+func varReplacement(s string, hsq bool, env Env, override bool) string {
 	if strings.HasPrefix(s, "\\") {
 		return strings.TrimPrefix(s, "\\")
 	}
@@ -220,7 +223,7 @@ func varReplacement(s string, hsq bool, env Env) string {
 
 	v := mn[3]
 
-	if replace, ok := os.LookupEnv(v); ok {
+	if replace, ok := os.LookupEnv(v); ok && !override {
 		return replace
 	}
 
@@ -246,7 +249,7 @@ func checkFormat(s string, env Env) error {
 	return fmt.Errorf("line `%s` doesn't match format", s)
 }
 
-func parseVal(val string, env Env, ignoreNewlines bool) string {
+func parseVal(val string, env Env, ignoreNewlines bool, override bool) string {
 	if strings.Contains(val, "=") && !ignoreNewlines {
 		kv := strings.Split(val, "\r")
 
@@ -254,7 +257,7 @@ func parseVal(val string, env Env, ignoreNewlines bool) string {
 			val = kv[0]
 
 			for i := 1; i < len(kv); i++ {
-				parseLine(kv[i], env)
+				parseLine(kv[i], env, override)
 			}
 		}
 	}
