@@ -2,7 +2,7 @@ name: Go workflow
 on: [push]
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
+    name: Test Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
