@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -112,6 +115,52 @@ func Parse(r io.Reader) Env {
 // This function is returning an error if there are any invalid lines.
 func StrictParse(r io.Reader) (Env, error) {
 	return strictParse(r, false)
+}
+
+//Unmarshal reads a string line by line and returns the valid Env key/value pair of valid variables.
+// It expands the value of a variable from the environment variable but does not set the value to the environment itself.
+// This function is returning an error if there are any invalid lines.
+func Unmarshal(str string) (Env, error) {
+	return strictParse(strings.NewReader(str), false)
+}
+
+// Marshal outputs the given environment as a env file.
+// Variables will be sorted by name.
+func Marshal(env Env) (string, error) {
+	lines := make([]string, 0, len(env))
+	for k, v := range env {
+		if d, err := strconv.Atoi(v); err == nil {
+			lines = append(lines, fmt.Sprintf(`%s=%d`, k, d))
+		} else {
+			lines = append(lines, fmt.Sprintf(`%s=%q`, k, v))
+		}
+	}
+	sort.Strings(lines)
+	return strings.Join(lines, "\n"), nil
+}
+
+// Write serializes the given environment and writes it to a file
+func Write(env Env, filename string) error {
+	content, err := Marshal(env)
+	if err != nil {
+		return err
+	}
+	// ensure the path exists
+	if err := os.MkdirAll(filepath.Dir(filename), 0o775); err != nil {
+		return err
+	}
+	// create or truncate the file
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.WriteString(content + "\n")
+	if err != nil {
+		return err
+	}
+
+	return file.Sync()
 }
 
 func strictParse(r io.Reader, override bool) (Env, error) {

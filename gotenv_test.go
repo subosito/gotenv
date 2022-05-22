@@ -405,3 +405,24 @@ func TestOverApply(t *testing.T) {
 	assert.Equal(t, "universe", os.Getenv("HELLO"))
 	os.Clearenv()
 }
+
+func TestMarshal(t *testing.T) {
+	env := gotenv.Env{
+		"FOO":    "BAR",
+		"ONE":    "1",
+		"QUOTED": `some "quoted" text`,
+		"EMPTY":  "",
+	}
+	expected := `EMPTY=""
+FOO="BAR"
+ONE=1
+QUOTED="some \"quoted\" text"`
+
+	actual, err := gotenv.Marshal(env)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, actual)
+
+	out, err := gotenv.Unmarshal(expected)
+	assert.Nil(t, err)
+	assert.Equal(t, env, out)
+}
