@@ -200,6 +200,13 @@ THE SOFTWARE.`,
 			"OPTION_I": `some multi-line text
 with "escaped quotes" and 1 variable`,
 			"OPTION_J": `some$pecial$1$2!*chars=qweq""e$$\$""`,
+			"OPTION_K": "\n",
+			"OPTION_L": `some multi-line text
+with "escaped quotes"
+empty lines
+
+and 1 variable
+`,
 		},
 	},
 	{
@@ -230,6 +237,19 @@ func TestStrictParse(t *testing.T) {
 		env, err := gotenv.StrictParse(strings.NewReader(tt.in))
 		assert.Equal(t, tt.err, err.Error())
 		assert.Equal(t, tt.out, env)
+	}
+}
+
+func TestRead(t *testing.T) {
+	for _, tt := range fixtures {
+		env, err := gotenv.Read(tt.filename)
+		assert.Nil(t, err)
+
+		for key, val := range tt.results {
+			assert.Equal(t, val, env[key])
+		}
+
+		os.Clearenv()
 	}
 }
 
