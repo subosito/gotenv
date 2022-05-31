@@ -127,7 +127,7 @@ func Read(filename string) (Env, error) {
 	return strictParse(f, false)
 }
 
-//Unmarshal reads a string line by line and returns the valid Env key/value pair of valid variables.
+// Unmarshal reads a string line by line and returns the valid Env key/value pair of valid variables.
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is returning an error if there are any invalid lines.
 func Unmarshal(str string) (Env, error) {
