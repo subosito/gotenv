@@ -201,10 +201,8 @@ func splitLines(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	return eol, data[:idx], nil
 }
 
-func strictParse(r io.Reader, env Env, override bool) (Env, error) {
-	if env == nil {
-		env = make(Env)
-	}
+func strictParse(r io.Reader, override bool) (Env, error) {
+	env := make(Env)
 	scanner := bufio.NewScanner(r)
 	scanner.Split(splitLines)
 
