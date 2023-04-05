@@ -209,6 +209,10 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 	firstLine := true
 
 	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return env, err
+		}
+
 		line := strings.TrimSpace(scanner.Text())
 
 		if firstLine {
