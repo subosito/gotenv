@@ -2,6 +2,8 @@ package gotenv_test
 
 import (
 	"bufio"
+	"errors"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -238,6 +240,19 @@ func TestStrictParse(t *testing.T) {
 		assert.Equal(t, tt.err, err.Error())
 		assert.Equal(t, tt.out, env)
 	}
+}
+
+type failingReader struct {
+	io.Reader
+}
+
+func (fr failingReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("you shall not read")
+}
+
+func TestStrictParse_PassThroughErrors(t *testing.T) {
+	_, err := gotenv.StrictParse(&failingReader{})
+	assert.Error(t, err)
 }
 
 func TestRead(t *testing.T) {
