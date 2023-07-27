@@ -255,6 +255,19 @@ func TestStrictParse_PassThroughErrors(t *testing.T) {
 	assert.Error(t, err)
 }
 
+type infiniteReader struct {
+	io.Reader
+}
+
+func (er infiniteReader) Read(p []byte) (n int, err error) {
+	return len(p), nil
+}
+
+func TestStrictParse_NoTokenPassThroughErrors(t *testing.T) {
+	_, err := gotenv.StrictParse(&infiniteReader{})
+	assert.Error(t, err)
+}
+
 func TestRead(t *testing.T) {
 	for _, tt := range fixtures {
 		env, err := gotenv.Read(tt.filename)
