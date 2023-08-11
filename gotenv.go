@@ -267,7 +267,7 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 		}
 	}
 
-	return env, nil
+	return env, scanner.Err()
 }
 
 var (
