@@ -12,6 +12,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 const (
@@ -20,10 +23,12 @@ const (
 
 	// Pattern for detecting valid variable within a value
 	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
-
-	// Byte order mark character
-	bom = "\xef\xbb\xbf"
 )
+
+// Byte order mark character
+var bomUTF8 = []byte("\xEF\xBB\xBF")
+var bomUTF16LE = []byte("\xFF\xFE")
+var bomUTF16BE = []byte("\xFE\xFF")
 
 // Env holds key/value pair of valid environment variable
 type Env map[string]string
@@ -48,12 +53,12 @@ func Must(fn func(filenames ...string) error, filenames ...string) {
 }
 
 // Apply is a function to load an io Reader then export the valid variables into environment variables if they do not exist.
-func Apply(r io.Reader) error {
+func Apply(r Reader) error {
 	return parset(r, false)
 }
 
 // OverApply is a function to load an io Reader then export and override the valid variables into environment variables.
-func OverApply(r io.Reader) error {
+func OverApply(r Reader) error {
 	return parset(r, true)
 }
 
@@ -79,7 +84,7 @@ func loadenv(override bool, filenames ...string) error {
 }
 
 // parse and set :)
-func parset(r io.Reader, override bool) error {
+func parset(r Reader, override bool) error {
 	env, err := strictParse(r, override)
 	if err != nil {
 		return err
@@ -105,7 +110,7 @@ func setenv(key, val string, override bool) {
 // Parse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is skipping any invalid lines and only processing the valid one.
-func Parse(r io.Reader) Env {
+func Parse(r Reader) Env {
 	env, _ := strictParse(r, false)
 	return env
 }
@@ -113,7 +118,7 @@ func Parse(r io.Reader) Env {
 // StrictParse is a function to parse line by line any io.Reader supplied and returns the valid Env key/value pair of valid variables.
 // It expands the value of a variable from the environment variable but does not set the value to the environment itself.
 // This function is returning an error if there are any invalid lines.
-func StrictParse(r io.Reader) (Env, error) {
+func StrictParse(r Reader) (Env, error) {
 	return strictParse(r, false)
 }
 
@@ -201,12 +206,34 @@ func splitLines(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	return eol, data[:idx], nil
 }
 
-func strictParse(r io.Reader, override bool) (Env, error) {
-	env := make(Env)
-	scanner := bufio.NewScanner(r)
-	scanner.Split(splitLines)
+type Reader interface {
+	io.Reader
+	io.ReaderAt
+}
 
-	firstLine := true
+func strictParse(r Reader, override bool) (Env, error) {
+	env := make(Env)
+
+	// We chooes a different scanner depending on file encoding.
+	var scanner *bufio.Scanner
+
+	// There can be a maximum of 3 BOM bytes.
+	bomByteBuffer := make([]byte, 3)
+	if _, err := r.ReadAt(bomByteBuffer, 0); err != nil {
+		return env, err
+	}
+
+	if bytes.HasPrefix(bomByteBuffer, bomUTF8) {
+		scanner = bufio.NewScanner(transform.NewReader(r, unicode.UTF8BOM.NewDecoder()))
+	} else if bytes.HasPrefix(bomByteBuffer, bomUTF16LE) {
+		scanner = bufio.NewScanner(transform.NewReader(r, unicode.UTF16(unicode.LittleEndian, unicode.ExpectBOM).NewDecoder()))
+	} else if bytes.HasPrefix(bomByteBuffer, bomUTF16BE) {
+		scanner = bufio.NewScanner(transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.ExpectBOM).NewDecoder()))
+	} else {
+		scanner = bufio.NewScanner(r)
+	}
+
+	scanner.Split(splitLines)
 
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
@@ -214,12 +241,6 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 		}
 
 		line := strings.TrimSpace(scanner.Text())
-
-		if firstLine {
-			line = strings.TrimPrefix(line, bom)
-			firstLine = false
-		}
-
 		if line == "" || line[0] == '#' {
 			continue
 		}
