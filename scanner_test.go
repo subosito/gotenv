@@ -9,7 +9,6 @@ import (
 )
 
 func TestScanner(t *testing.T) {
-
 	type testCase struct {
 		name string
 		in   string

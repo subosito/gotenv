@@ -26,9 +26,11 @@ const (
 )
 
 // Byte order mark character
-var bomUTF8 = []byte("\xEF\xBB\xBF")
-var bomUTF16LE = []byte("\xFF\xFE")
-var bomUTF16BE = []byte("\xFE\xFF")
+var (
+	bomUTF8    = []byte("\xEF\xBB\xBF")
+	bomUTF16LE = []byte("\xFF\xFE")
+	bomUTF16BE = []byte("\xFE\xFF")
+)
 
 // Env holds key/value pair of valid environment variable
 type Env map[string]string
