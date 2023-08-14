@@ -3,7 +3,6 @@ package gotenv_test
 import (
 	"bufio"
 	"errors"
-	"io"
 	"os"
 	"strings"
 	"testing"
@@ -243,10 +242,14 @@ func TestStrictParse(t *testing.T) {
 }
 
 type failingReader struct {
-	io.Reader
+	gotenv.Reader
 }
 
 func (fr failingReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("you shall not read")
+}
+
+func (fr failingReader) ReadAt(p []byte, off int64) (n int, err error) {
 	return 0, errors.New("you shall not read")
 }
 
@@ -256,10 +259,14 @@ func TestStrictParse_PassThroughErrors(t *testing.T) {
 }
 
 type infiniteReader struct {
-	io.Reader
+	gotenv.Reader
 }
 
 func (er infiniteReader) Read(p []byte) (n int, err error) {
+	return len(p), nil
+}
+
+func (er infiniteReader) ReadAt(p []byte, off int64) (n int, err error) {
 	return len(p), nil
 }
 
@@ -346,7 +353,7 @@ func TestLoad_nonExist(t *testing.T) {
 }
 
 func TestLoad_unicodeBOMFixture(t *testing.T) {
-	file := "fixtures/bom.env"
+	file := "fixtures/utf8_bom.env"
 
 	f, err := os.Open(file)
 	assert.Nil(t, err)
@@ -364,13 +371,34 @@ func TestLoad_unicodeBOMFixture(t *testing.T) {
 	}
 }
 
-func TestLoad_unicodeBOM(t *testing.T) {
-	file := "fixtures/bom.env"
+func TestLoad_BOM_UTF8(t *testing.T) {
+	defer os.Clearenv()
 
-	err := gotenv.Load(file)
-	assert.Nil(t, err)
-	assert.Equal(t, "UTF-8", os.Getenv("BOM"))
-	os.Clearenv()
+	file := "fixtures/utf8_bom.env"
+
+	if err := gotenv.Load(file); assert.Nil(t, err) {
+		assert.Equal(t, "UTF-8", os.Getenv("BOM"))
+	}
+}
+
+func TestLoad_BOM_UTF16_LE(t *testing.T) {
+	defer os.Clearenv()
+
+	file := "fixtures/utf16le_bom.env"
+
+	if err := gotenv.Load(file); assert.Nil(t, err) {
+		assert.Equal(t, "UTF-16 LE", os.Getenv("BOM"))
+	}
+}
+
+func TestLoad_BOM_UTF16_BE(t *testing.T) {
+	defer os.Clearenv()
+
+	file := "fixtures/utf16be_bom.env"
+
+	if err := gotenv.Load(file); assert.Nil(t, err) {
+		assert.Equal(t, "UTF-16 BE", os.Getenv("BOM"))
+	}
 }
 
 func TestMust_Load(t *testing.T) {
