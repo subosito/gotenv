@@ -2,6 +2,12 @@
 
 ## [1.5.0] - 2023-08-15
 
+### Fixed
+
+- Use io.Reader instead of custom Reader
+
+## [1.5.0] - 2023-08-15
+
 ### Added
 
 - Support for reading UTF16 files
