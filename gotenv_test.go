@@ -371,6 +371,12 @@ func TestLoad_unicodeBOMFixture(t *testing.T) {
 	}
 }
 
+func TestLoad_EmptyEnvFile(t *testing.T) {
+	defer os.Clearenv()
+
+	assert.NoError(t, gotenv.Load("fixtures/empty.env"))
+}
+
 func TestLoad_BOM_UTF8(t *testing.T) {
 	defer os.Clearenv()
 

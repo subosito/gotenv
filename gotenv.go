@@ -4,6 +4,7 @@ package gotenv
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -222,6 +223,10 @@ func strictParse(r Reader, override bool) (Env, error) {
 	// There can be a maximum of 3 BOM bytes.
 	bomByteBuffer := make([]byte, 3)
 	if _, err := r.ReadAt(bomByteBuffer, 0); err != nil {
+		// Empty files will definitely not have BOM bytes.
+		if errors.Is(err, io.EOF) {
+			return env, nil
+		}
 		return env, err
 	}
 
