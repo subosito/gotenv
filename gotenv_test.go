@@ -3,6 +3,7 @@ package gotenv_test
 import (
 	"bufio"
 	"errors"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -242,14 +243,10 @@ func TestStrictParse(t *testing.T) {
 }
 
 type failingReader struct {
-	gotenv.Reader
+	io.Reader
 }
 
 func (fr failingReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("you shall not read")
-}
-
-func (fr failingReader) ReadAt(p []byte, off int64) (n int, err error) {
 	return 0, errors.New("you shall not read")
 }
 
@@ -259,14 +256,10 @@ func TestStrictParse_PassThroughErrors(t *testing.T) {
 }
 
 type infiniteReader struct {
-	gotenv.Reader
+	io.Reader
 }
 
 func (er infiniteReader) Read(p []byte) (n int, err error) {
-	return len(p), nil
-}
-
-func (er infiniteReader) ReadAt(p []byte, off int64) (n int, err error) {
 	return len(p), nil
 }
 
