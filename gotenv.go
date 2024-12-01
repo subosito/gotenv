@@ -186,7 +186,7 @@ func Write(env Env, filename string) error {
 // If a CR is immediately followed by a LF, it is treated as a CRLF (one single line break).
 func splitLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if atEOF && len(data) == 0 {
-		return 0, nil, bufio.ErrFinalToken
+		return 0, []byte{}, bufio.ErrFinalToken
 	}
 
 	idx := bytes.IndexAny(data, "\r\n")
