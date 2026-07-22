@@ -15,14 +15,14 @@ Put the gotenv package on your `import` statement:
 import "github.com/subosito/gotenv"
 ```
 
-To modify your app environment variables, `gotenv` expose 2 main functions:
+To modify your app environment variables, `gotenv` exposes 2 main functions:
 
 - `gotenv.Load`
 - `gotenv.Apply`
 
 By default, `gotenv.Load` will look for a file called `.env` in the current working directory.
 
-Behind the scene, it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure it loads all variables, say, put it on `init()` function.
+Behind the scenes, it will then load `.env` file and export the valid variables to the environment variables. Make sure you call the method as soon as possible to ensure it loads all variables, say, put it on `init()` function.
 
 Once loaded you can use `os.Getenv()` to get the value of the variable.
 
@@ -69,11 +69,11 @@ log.Println(os.Getenv("APP_ID"))
 // Output: "1234567"
 ```
 
-Both `gotenv.Load` and `gotenv.Apply` **DO NOT** overrides existing environment variables. If you want to override existing ones, you can see section below.
+Both `gotenv.Load` and `gotenv.Apply` **DO NOT** override existing environment variables. If you want to override existing ones, you can see section below.
 
 ### Environment Overrides
 
-Besides above functions, `gotenv` also provides another functions that overrides existing:
+Besides above functions, `gotenv` also provides other functions that override existing ones:
 
 - `gotenv.OverLoad`
 - `gotenv.OverApply`
