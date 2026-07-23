@@ -223,7 +223,7 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 
 	z := io.MultiReader(buf, r)
 
-	// We chooes a different scanner depending on file encoding.
+	// We choose a different scanner depending on file encoding.
 	var scanner *bufio.Scanner
 
 	if bytes.HasPrefix(bomByteBuffer, bomUTF8) {
@@ -257,7 +257,7 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 		// look for a quote character
 		if idx > 0 && idx < len(line)-1 {
 			val := strings.TrimSpace(line[idx+1:])
-			if val[0] == '"' || val[0] == '\'' {
+			if len(val) > 0 && (val[0] == '"' || val[0] == '\'') {
 				quote = val[:1]
 				// look for the closing quote character within the same line
 				idx = strings.LastIndex(strings.TrimSpace(val[1:]), quote)
@@ -272,11 +272,11 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 			line += "\n" + l
 			idx := strings.LastIndex(l, quote)
 			if idx > 0 && l[idx-1] == '\\' {
-				// foud a matching quote character but it's escaped
+				// found a matching quote character but it's escaped
 				continue
 			}
 			if idx >= 0 {
-				// foud a matching quote
+				// found a matching quote
 				quote = ""
 			}
 		}
