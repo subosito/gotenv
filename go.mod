@@ -1,10 +1,10 @@
 module github.com/subosito/gotenv
 
-go 1.22
+go 1.25.0
 
 require (
-	github.com/stretchr/testify v1.7.5
-	golang.org/x/text v0.12.0
+	github.com/stretchr/testify v1.12.0
+	golang.org/x/text v0.41.0
 )
 
 require (
