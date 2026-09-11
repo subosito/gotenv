@@ -19,7 +19,7 @@ func TestScanner(t *testing.T) {
 		{
 			"regular LF split with trailing LF",
 			"aa\nbb\ncc\n",
-			[]string{"aa", "bb", "cc", ""},
+			[]string{"aa", "bb", "cc"},
 		},
 		{
 			"regular LF split with no trailing LF",
@@ -30,7 +30,7 @@ func TestScanner(t *testing.T) {
 		{
 			"regular CR split with trailing CR",
 			"aa\rbb\rcc\r",
-			[]string{"aa", "bb", "cc", ""},
+			[]string{"aa", "bb", "cc"},
 		},
 		{
 			"regular CR split with no trailing CR",
@@ -41,7 +41,7 @@ func TestScanner(t *testing.T) {
 		{
 			"regular CRLF split with trailing CRLF",
 			"aa\r\nbb\r\ncc\r\n",
-			[]string{"aa", "bb", "cc", ""},
+			[]string{"aa", "bb", "cc"},
 		},
 		{
 			"regular CRLF split with no trailing CRLF",
