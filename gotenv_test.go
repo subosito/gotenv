@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -494,4 +495,48 @@ QUOTED="some \"quoted\" text"`
 	out, err := gotenv.Unmarshal(expected)
 	assert.Nil(t, err)
 	assert.Equal(t, env, out)
+}
+
+func TestMarshalEscapesDollar(t *testing.T) {
+	t.Setenv("SECRET", "hunter2")
+
+	values := []string{
+		"$SECRET",
+		"${SECRET}",
+		"prefix-$SECRET-suffix",
+		"$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234",
+		"$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWRWJTmaaJObG",
+		"Pa$Sw0rd!",
+		"costs $5",
+		"${UNSET_VARIABLE}",
+		`back\$SECRET`,
+		"lower$case and trailing $",
+	}
+
+	for _, v := range values {
+		env := gotenv.Env{"KEY": v}
+
+		out, err := gotenv.Marshal(env)
+		assert.Nil(t, err)
+
+		got, err := gotenv.Unmarshal(out)
+		assert.Nil(t, err)
+		assert.Equal(t, env, got, "Unmarshal(Marshal(%q)) from %q", v, out)
+	}
+}
+
+func TestWriteEscapesDollar(t *testing.T) {
+	t.Setenv("SECRET", "hunter2")
+
+	env := gotenv.Env{"KEY": "$SECRET and ${SECRET}"}
+	path := filepath.Join(t.TempDir(), "out.env")
+	assert.Nil(t, gotenv.Write(env, path))
+
+	f, err := os.Open(path)
+	assert.Nil(t, err)
+	defer f.Close()
+
+	got, err := gotenv.StrictParse(f)
+	assert.Nil(t, err)
+	assert.Equal(t, env, got)
 }
