@@ -151,7 +151,9 @@ func Marshal(env Env) (string, error) {
 		if d, err := strconv.Atoi(v); err == nil {
 			lines = append(lines, fmt.Sprintf(`%s=%d`, k, d))
 		} else {
-			lines = append(lines, fmt.Sprintf(`%s=%q`, k, v))
+			// Escape $ so that Unmarshal does not expand it as a variable.
+			q := strings.ReplaceAll(strconv.Quote(v), "$", `\$`)
+			lines = append(lines, fmt.Sprintf(`%s=%s`, k, q))
 		}
 	}
 	sort.Strings(lines)
