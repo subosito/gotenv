@@ -495,3 +495,37 @@ QUOTED="some \"quoted\" text"`
 	assert.Nil(t, err)
 	assert.Equal(t, env, out)
 }
+
+func TestMarshalRoundTripSpecialBytes(t *testing.T) {
+	cases := []string{
+		"a\tb",
+		"a\x01b",
+		"a\u200bb",
+		"a\xffb",
+		"plain",
+		"has \"quoted\" text",
+		"has\\slash",
+		"line\nbreak",
+		"line\rbreak",
+		" leading",
+		"trailing ",
+		"#hash",
+		"eq=ual",
+		"col:on",
+		"",
+	}
+	for _, v := range cases {
+		env := gotenv.Env{"K": v}
+		out, err := gotenv.Marshal(env)
+		assert.Nil(t, err)
+		got, err := gotenv.Unmarshal(out)
+		assert.Nil(t, err)
+		assert.Equal(t, env, got, "round-trip %q from %s", v, out)
+	}
+}
+
+func TestMarshalDoesNotUseGoHexEscapes(t *testing.T) {
+	out, err := gotenv.Marshal(gotenv.Env{"K": "a\tb"})
+	assert.Nil(t, err)
+	assert.Equal(t, "K=\"a\tb\"", out)
+}
