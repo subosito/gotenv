@@ -151,11 +151,34 @@ func Marshal(env Env) (string, error) {
 		if d, err := strconv.Atoi(v); err == nil {
 			lines = append(lines, fmt.Sprintf(`%s=%d`, k, d))
 		} else {
-			lines = append(lines, fmt.Sprintf(`%s=%q`, k, v))
+			lines = append(lines, k+"="+quoteValue(v))
 		}
 	}
 	sort.Strings(lines)
 	return strings.Join(lines, "\n"), nil
+}
+
+// quoteValue writes a double-quoted value using only escapes that Unmarshal
+// can decode: \\ \" \n and \r. Go's %q also emits \t, \xNN, \uNNNN and
+// \UNNNNNNNN, which parseLine treats as literal letters.
+func quoteValue(v string) string {
+	var b strings.Builder
+	b.WriteByte('"')
+	for i := 0; i < len(v); i++ {
+		switch c := v[i]; c {
+		case '\\', '"':
+			b.WriteByte('\\')
+			b.WriteByte(c)
+		case '\n':
+			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		default:
+			b.WriteByte(c)
+		}
+	}
+	b.WriteByte('"')
+	return b.String()
 }
 
 // Write serializes the given environment and writes it to a file
