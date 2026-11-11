@@ -70,19 +70,21 @@ func loadenv(override bool, filenames ...string) error {
 	}
 
 	for _, filename := range filenames {
-		f, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-
-		err = parset(f, override)
-		f.Close()
-		if err != nil {
+		if err := loadFile(filename, override); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func loadFile(filename string, override bool) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return parset(f, override)
 }
 
 // parse and set :)
