@@ -495,3 +495,81 @@ QUOTED="some \"quoted\" text"`
 	assert.Nil(t, err)
 	assert.Equal(t, env, out)
 }
+
+func TestStrictParse_ValidExportLine(t *testing.T) {
+	in := "OPTION_A=2\nexport OPTION_A\nexport   OPTION_A"
+	env, err := gotenv.StrictParse(strings.NewReader(in))
+	assert.Nil(t, err)
+	assert.Equal(t, "2", env["OPTION_A"])
+
+	_, err = gotenv.StrictParse(strings.NewReader("export"))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "doesn't match format")
+}
+
+func TestVariableExpansion_Lowercase(t *testing.T) {
+	in := "foo=bar\nbaz=$foo\nqux=${foo}_123"
+	env, err := gotenv.StrictParse(strings.NewReader(in))
+	assert.Nil(t, err)
+	assert.Equal(t, "bar", env["foo"])
+	assert.Equal(t, "bar", env["baz"])
+	assert.Equal(t, "bar_123", env["qux"])
+}
+
+func TestTabEscapeInDoubleQuotes(t *testing.T) {
+	in := `FOO="bar\tbaz"`
+	env, err := gotenv.StrictParse(strings.NewReader(in))
+	assert.Nil(t, err)
+	assert.Equal(t, "bar\tbaz", env["FOO"])
+}
+
+func TestMarshal_LeadingZero(t *testing.T) {
+	env := gotenv.Env{
+		"ZIP":  "01234",
+		"NUM":  "1234",
+		"ZERO": "0",
+	}
+	actual, err := gotenv.Marshal(env)
+	assert.Nil(t, err)
+	assert.Contains(t, actual, `ZIP="01234"`)
+	assert.Contains(t, actual, `NUM=1234`)
+	assert.Contains(t, actual, `ZERO=0`)
+}
+
+func TestEscapedQuoteParity(t *testing.T) {
+	// A line with an escaped backslash before the quote: \\"
+	in := `FOO="test\\"`
+	env, err := gotenv.StrictParse(strings.NewReader(in))
+	assert.Nil(t, err)
+	assert.Equal(t, `test\`, env["FOO"])
+}
+
+type chunkedReader struct {
+	data [][]byte
+}
+
+func (c *chunkedReader) Read(p []byte) (int, error) {
+	if len(c.data) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, c.data[0])
+	c.data[0] = c.data[0][n:]
+	if len(c.data[0]) == 0 {
+		c.data = c.data[1:]
+	}
+	return n, nil
+}
+
+func TestSplitLines_ChunkedCRLF(t *testing.T) {
+	// Feed chunk ending in \r, followed by chunk starting with \n
+	r := &chunkedReader{
+		data: [][]byte{
+			[]byte("FOO=bar\r"),
+			[]byte("\nBAZ=qux\n"),
+		},
+	}
+	env, err := gotenv.StrictParse(r)
+	assert.Nil(t, err)
+	assert.Equal(t, "bar", env["FOO"])
+	assert.Equal(t, "qux", env["BAZ"])
+}

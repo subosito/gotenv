@@ -22,7 +22,7 @@ const (
 	linePattern = `\A\s*(?:export\s+)?([\w\.]+)(?:\s*=\s*|:\s+?)('(?:\'|[^'])*'|"(?:\"|[^"])*"|[^#\n]+)?\s*(?:\s*\#.*)?\z`
 
 	// Pattern for detecting valid variable within a value
-	variablePattern = `(\\)?(\$)(\{?([A-Z0-9_]+)?\}?)`
+	variablePattern = `(\\)?(\$)(\{?([A-Za-z0-9_]+)?\}?)`
 )
 
 // Byte order mark character
@@ -148,7 +148,7 @@ func Unmarshal(str string) (Env, error) {
 func Marshal(env Env) (string, error) {
 	lines := make([]string, 0, len(env))
 	for k, v := range env {
-		if d, err := strconv.Atoi(v); err == nil {
+		if d, err := strconv.Atoi(v); err == nil && (len(v) == 1 || v[0] != '0') {
 			lines = append(lines, fmt.Sprintf(`%s=%d`, k, d))
 		} else {
 			lines = append(lines, fmt.Sprintf(`%s=%q`, k, v))
@@ -198,6 +198,10 @@ func splitLines(data []byte, atEOF bool) (advance int, token []byte, err error) 
 		return 0, nil, nil
 	}
 
+	if data[idx] == '\r' && idx == len(data)-1 && !atEOF {
+		return 0, nil, nil
+	}
+
 	// consume CR or LF
 	eol := idx + 1
 	// detect CRLF
@@ -216,10 +220,11 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 
 	// There can be a maximum of 3 BOM bytes.
 	bomByteBuffer := make([]byte, 3)
-	_, err := tee.Read(bomByteBuffer)
-	if err != nil && err != io.EOF {
+	n, err := io.ReadFull(tee, bomByteBuffer)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		return env, err
 	}
+	bomByteBuffer = bomByteBuffer[:n]
 
 	z := io.MultiReader(buf, r)
 
@@ -257,11 +262,11 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 		// look for a quote character
 		if idx > 0 && idx < len(line)-1 {
 			val := strings.TrimSpace(line[idx+1:])
-			if val[0] == '"' || val[0] == '\'' {
+			if len(val) > 0 && (val[0] == '"' || val[0] == '\'') {
 				quote = val[:1]
 				// look for the closing quote character within the same line
-				idx = strings.LastIndex(strings.TrimSpace(val[1:]), quote)
-				if idx >= 0 && val[idx] != '\\' {
+				idx = strings.LastIndex(val[1:], quote)
+				if idx >= 0 && !isEscaped(val[1:], idx) {
 					quote = ""
 				}
 			}
@@ -271,12 +276,12 @@ func strictParse(r io.Reader, override bool) (Env, error) {
 			l := scanner.Text()
 			line += "\n" + l
 			idx := strings.LastIndex(l, quote)
-			if idx > 0 && l[idx-1] == '\\' {
-				// foud a matching quote character but it's escaped
+			if idx >= 0 && isEscaped(l, idx) {
+				// found a matching quote character but it's escaped
 				continue
 			}
 			if idx >= 0 {
-				// foud a matching quote
+				// found a matching quote
 				quote = ""
 			}
 		}
@@ -329,6 +334,7 @@ func parseLine(s string, env Env, override bool) error {
 	if hdq {
 		val = strings.ReplaceAll(val, `\n`, "\n")
 		val = strings.ReplaceAll(val, `\r`, "\r")
+		val = strings.ReplaceAll(val, `\t`, "\t")
 
 		// Unescape all characters except $ so variables can be escaped properly
 		val = unescapeRgx.ReplaceAllString(val, "$1")
@@ -345,21 +351,31 @@ func parseLine(s string, env Env, override bool) error {
 	return nil
 }
 
-func parseExport(st string, env Env) error {
+func isEscaped(s string, idx int) bool {
+	count := 0
+	for i := idx - 1; i >= 0 && s[i] == '\\'; i-- {
+		count++
+	}
+	return count%2 != 0
+}
+
+func parseExport(st string, env Env) (bool, error) {
 	if strings.HasPrefix(st, "export") {
-		vs := strings.SplitN(st, " ", 2)
+		vs := strings.Fields(st)
 
 		if len(vs) > 1 {
 			if _, ok := env[vs[1]]; !ok {
-				return fmt.Errorf("line `%s` has an unset variable", st)
+				return true, fmt.Errorf("line `%s` has an unset variable", st)
 			}
+			return true, nil
 		}
+		return true, fmt.Errorf("line `%s` doesn't match format", st)
 	}
 
-	return nil
+	return false, nil
 }
 
-var varNameRgx = regexp.MustCompile(`(\$)(\{?([A-Z0-9_]+)\}?)`)
+var varNameRgx = regexp.MustCompile(`(\$)(\{?([A-Za-z0-9_]+)\}?)`)
 
 func varReplacement(s string, hsq bool, env Env, override bool) string {
 	if s == "" {
@@ -401,7 +417,7 @@ func checkFormat(s string, env Env) error {
 		return nil
 	}
 
-	if err := parseExport(st, env); err != nil {
+	if isExport, err := parseExport(st, env); isExport {
 		return err
 	}
 
